@@ -595,6 +595,20 @@ Public Class EnhancedTaxiMissions
         GTA.Native.Function.Call(Native.Hash.DISPLAY_CASH, True)
     End Sub
 
+    Public Sub calculateFare(StartPoint As Vector3, EndPoint As Vector3)
+        Dim sPos As Vector3 = StartPoint
+        Dim ePos As Vector3 = EndPoint
+        FareDistance = GTA.Native.Function.Call(Of Single)(Native.Hash.CALCULATE_TRAVEL_DISTANCE_BETWEEN_POINTS, sPos.X, sPos.Y, sPos.Z, ePos.X, ePos.Y, ePos.Z) / 1000
+        If FareDistance > 20 Then
+            FareDistance = World.GetDistance(StartPoint, EndPoint)
+        End If
+        FareDistance *= 0.621371
+        FareTotal = CInt(FareBase + (FareDistance * FarePerMile))
+
+        PRINT("DIS: " & Math.Round(FareDistance, 2) & " mi / $" & FareTotal)
+    End Sub
+
+
 
 
     Private Sub StartMission()
@@ -894,16 +908,7 @@ Public Class EnhancedTaxiMissions
         'OriginBlip.Remove
         'PRINT("Origin Blip Removed")
 
-        Dim opos As Vector3 = Origin.Coords
-        Dim dpos As Vector3 = Destination.Coords
-        FareDistance = GTA.Native.Function.Call(Of Single)(Native.Hash.CALCULATE_TRAVEL_DISTANCE_BETWEEN_POINTS, opos.X, opos.Y, opos.Z, dpos.X, dpos.Y, dpos.Z) / 1000
-        If FareDistance > 20000 Then
-            FareDistance = 1300
-        End If
-        FareDistance *= 0.621371
-        FareTotal = CInt(FareBase + (FareDistance * FarePerMile))
-
-        PRINT("DIS: " & Math.Round(FareDistance, 2) & " mi / $" & FareTotal)
+        calculateFare(Origin.Coords, Destination.Coords)
 
         UI_DispatchStatus = "Customer has been notified of your arrival"
         If isThereASecondCustomer = True Then
