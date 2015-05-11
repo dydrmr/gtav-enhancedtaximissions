@@ -83,6 +83,10 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub SavePosition(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
+
+        'Temporary subroutine that aims to save the players current XYZ coords and heading to an ini file, to speed up the process of entering coordinates for new locations.
+        'Haven't quite figured out how to save to an ini file yet.
+
         If k.KeyCode = Keys.Multiply Then
             Dim pos As Vector3 = Game.Player.Character.Position
             Dim hdg As Single = Game.Player.Character.Heading
@@ -134,7 +138,7 @@ Public Class EnhancedTaxiMissions
 
 
         UI.Items.Add(New UIRectangle(New Point(0, 0), New Size(190, 25), UIcolor_Header))
-        UI.Items.Add(New UIText("Limousine Driver" & " (" & MiniGameStage & ")   " & IngameHour.ToString("D2") & ":" & IngameMinute.ToString("D2"), New Point(3, 1), 0.5, UItext_White, 1, False))
+        UI.Items.Add(New UIText("Limousine Driver" & " (" & MiniGameStage & ")    " & IngameHour.ToString("D2") & ":" & IngameMinute.ToString("D2"), New Point(3, 1), 0.5, UItext_White, 1, False))
 
 
         UI.Items.Add(New UIRectangle(New Point(0, 27), New Size(190, 20), UIcolor_Status))
@@ -247,8 +251,10 @@ Public Class EnhancedTaxiMissions
                         CustomerPed.Heading = Origin.PedStartHDG
                     End If
 
-                    GTA.Native.Function.Call(Native.Hash.CREATE_GROUP, 1)
-                    GTA.Native.Function.Call(Native.Hash.SET_PED_AS_GROUP_LEADER, CustomerPed, 1)
+                    'TO-DO
+                    'PUT PEDS INTO A GROUP OR SET THEIR RELATIONSHIPS TO FRIENDLY SO THEY DON'T PANIC WHEN THEY ALL GET INTO THE CAR
+                    'GTA.Native.Function.Call(Native.Hash.CREATE_GROUP, 1)
+                    'GTA.Native.Function.Call(Native.Hash.SET_PED_AS_GROUP_LEADER, CustomerPed, 1)
 
                     If isThereASecondCustomer = True Then
                         Customer2Ped = GTA.Native.Function.Call(Of Ped)(Native.Hash.CREATE_RANDOM_PED, pos.X + 0.2, pos.Y + 0.2, pos.Z + 0.3)
@@ -260,7 +266,9 @@ Public Class EnhancedTaxiMissions
                         GTA.Native.Function.Call(Native.Hash.SET_PED_AS_GROUP_MEMBER, Customer3Ped, 1)
                     End If
 
-                    GTA.Native.Function.Call(Native.Hash.CREATE_OBJECT, New GTA.Model("mk_arrow").Hash, opos.X, opos.Y, opos.Z, OriginMarker, 1)
+                    'TO-DO
+                    'CREATE MISSION MARKER (LIKE THE ACTUAL TAXI MISSIONS)
+                    'GTA.Native.Function.Call(Native.Hash.CREATE_OBJECT, New GTA.Model("mk_arrow").Hash, opos.X, opos.Y, opos.Z, OriginMarker, 1)
                     'PRINT("Ped spawned & area cleared")
                 End If
             End If
@@ -635,8 +643,6 @@ Public Class EnhancedTaxiMissions
 
         OriginBlip = World.CreateBlip(Origin.Coords)
         OriginBlip.Color = BlipColor.Blue
-        'outdatedOriginBlip = GTA.Native.Function.Call(Of Integer)(Native.Hash.ADD_BLIP_FOR_COORD, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z)
-        'GTA.Native.Function.Call(Native.Hash.SET_BLIP_COLOUR, outdatedOriginBlip, 3)
         GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.ID, 1)
 
         updateDist1 = True
@@ -781,6 +787,8 @@ Public Class EnhancedTaxiMissions
 
         'EPSILON
         'CELEB
+        'HURRY
+        'FOLLOWTHATCAR
 
     End Sub
 
@@ -829,7 +837,6 @@ Public Class EnhancedTaxiMissions
             distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, Destination.Coords.X, Destination.Coords.Y, Destination.Coords.Z, 1)
         Loop While Origin.Name = Destination.Name Or distance < 500
 
-        Destination = LSIA1Depart
         UI_Destination = Destination.Name
     End Sub
 
@@ -950,8 +957,6 @@ Public Class EnhancedTaxiMissions
         DestinationBlip = World.CreateBlip(Destination.Coords)
         DestinationBlip.Color = BlipColor.Blue
 
-        'outdatedDestinationBlip = GTA.Native.Function.Call(Of Integer)(Native.Hash.ADD_BLIP_FOR_COORD, Destination.Coords.X, Destination.Coords.Y, Destination.Coords.Z)
-        'GTA.Native.Function.Call(Native.Hash.SET_BLIP_COLOUR, outdatedDestinationBlip, 3)
         GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.ID, 1)
         'PRINT("DestinationBlip: " & DestinationBlip)
 
@@ -969,11 +974,16 @@ Public Class EnhancedTaxiMissions
 
     Private Sub PlayerHasStoppedAtDestination()
 
+        MiniGameStage = MiniGameStages.PedGettingOut
+
         'TO-DO
         'REMOVE GPS ROUTE TO DESTINATION BLIP
         'DestinationBlip.Remove
         'PRINT("Destination Blip Removed")
 
+
+        'TO-DO
+        'RE-IMPLEMENT TASK SEQUENCES ONCE THEY GET FIXED IN SCRIPTHOOKVDOTNET
         'Dim s1, s2, s3 As New TaskSequence
 
         's1.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
@@ -992,9 +1002,11 @@ Public Class EnhancedTaxiMissions
 
 
 
-        Dim isDestinationSet As Boolean = True
+        Dim isDestinationSet As Boolean
         If Destination.PedEnd.X = 0 And Destination.PedEnd.Y = 0 And Destination.PedEnd.Z = 0 Then
             isDestinationSet = False
+        Else
+            isDestinationSet = True
         End If
 
         If isDestinationSet = False Then
