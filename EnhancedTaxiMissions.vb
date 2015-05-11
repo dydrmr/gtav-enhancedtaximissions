@@ -21,7 +21,6 @@ Public Class EnhancedTaxiMissions
     Public Origin, Destination As Location
     Public PotentialOrigins, PotentialDestinations As New List(Of Location)
 
-    'Public outdatedOriginBlip, outdatedDestinationBlip As Integer
     Public OriginBlip, DestinationBlip As Blip
     Public OriginMarker, DestinationMarker As Integer
 
@@ -591,31 +590,11 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub payPlayer(amount As Integer)
-        'Dim mdl As Integer = 0
-
-        'If Game.Player.Character.Model.Hash = New Model("player_zero").Hash Then
-        'mdl = 0
-        'End If
-        'If Game.Player.Character.Model.Hash = New Model("player_one").Hash Then
-        'mdl = 1
-        'End If
-        'If Game.Player.Character.Model.Hash = New Model("player_two").Hash Then
-        'mdl = 2
-        'End If
-
         Dim currentMoney = Game.Player.Money
         Game.Player.Money = currentMoney + amount
-        GTA.UI.Notify("You have been paid $" & amount)
 
         GTA.Native.Function.Call(Native.Hash.DISPLAY_CASH, True)
     End Sub
-
-    Public Sub PayTest(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
-        If k.KeyCode = Keys.Divide Then
-            payPlayer(100)
-        End If
-    End Sub
-
 
 
 
@@ -982,20 +961,24 @@ Public Class EnhancedTaxiMissions
 
         'TO-DO
         'RE-IMPLEMENT TASK SEQUENCES ONCE THEY GET FIXED IN SCRIPTHOOKVDOTNET
-        'Dim s1, s2, s3 As New TaskSequence
+        Dim s1, s2, s3 As New TaskSequence
 
-        's1.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-        's1.AddTask.Wait(1500)
-        CustomerPed.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+        s1 = New TaskSequence(CustomerPed.ID)
+
+        s1.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+        s1.AddTask.Wait(1500)
+        'CustomerPed.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         If isThereASecondCustomer = True Then
-            's2.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-            's2.AddTask.Wait(1500)
-            Customer2Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+            s2 = New TaskSequence(Customer2Ped.ID)
+            s2.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+            s2.AddTask.Wait(1500)
+            'Customer2Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         End If
         If isThereAThirdCustomer = True Then
-            's3.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-            's3.AddTask.Wait(1500)
-            Customer3Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+            s3 = New TaskSequence(Customer3Ped.ID)
+            s3.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+            s3.AddTask.Wait(1500)
+            'Customer3Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         End If
 
 
@@ -1008,40 +991,40 @@ Public Class EnhancedTaxiMissions
         End If
 
         If isDestinationSet = False Then
-            's1.AddTask.GoTo(Destination.PedStart, False)
-            CustomerPed.Task.GoTo(Destination.PedStart, False)
+            s1.AddTask.GoTo(Destination.PedStart, False)
+            'CustomerPed.Task.GoTo(Destination.PedStart, False)
         Else
-            's1.AddTask.GoTo(Destination.PedEnd, False)
-            CustomerPed.Task.GoTo(Destination.PedEnd, False)
+            s1.AddTask.GoTo(Destination.PedEnd, False)
+            'CustomerPed.Task.GoTo(Destination.PedEnd, False)
         End If
 
-        's1.AddTask.Wait(10000)
-        's1.Perform(CustomerPed)
+        s1.AddTask.Wait(10000)
+        s1.CloseSequence()
         CustomerPed.MarkAsNoLongerNeeded()
 
         If isThereASecondCustomer = True Then
             If isDestinationSet = False Then
-                's2.AddTask.GoTo(Destination.PedStart, False)
-                Customer2Ped.Task.GoTo(Destination.PedStart, False)
+                s2.AddTask.GoTo(Destination.PedStart, False)
+                'Customer2Ped.Task.GoTo(Destination.PedStart, False)
             Else
-                's2.AddTask.GoTo(Destination.PedEnd, False)
-                Customer2Ped.Task.GoTo(Destination.PedEnd, False)
+                s2.AddTask.GoTo(Destination.PedEnd, False)
+                'Customer2Ped.Task.GoTo(Destination.PedEnd, False)
             End If
-            's2.AddTask.Wait(10000)
-            's2.Perform(Customer2Ped)
+            s2.AddTask.Wait(10000)
+            s2.CloseSequence()
             Customer2Ped.MarkAsNoLongerNeeded()
         End If
 
         If isThereAThirdCustomer = True Then
             If isDestinationSet = False Then
-                's3.AddTask.GoTo(Destination.PedStart, False)
-                Customer3Ped.Task.GoTo(Destination.PedStart, False)
+                s3.AddTask.GoTo(Destination.PedStart, False)
+                'Customer3Ped.Task.GoTo(Destination.PedStart, False)
             Else
-                's3.AddTask.GoTo(Destination.PedEnd, False)
-                Customer3Ped.Task.GoTo(Destination.PedEnd, False)
+                s3.AddTask.GoTo(Destination.PedEnd, False)
+                'Customer3Ped.Task.GoTo(Destination.PedEnd, False)
             End If
-            's3.AddTask.Wait(10000)
-            's3.Perform(Customer3Ped)
+            s3.AddTask.Wait(10000)
+            s3.CloseSequence()
             Customer3Ped.MarkAsNoLongerNeeded()
         End If
 
@@ -1312,6 +1295,9 @@ Public Module Places
     Public DD3587 As New Location("3587 Didion Dr", New Vector3(-468.259, 547.306, 119.666), LocationType.Residential, New Vector3(-458.82, 537.47, 121.46), 352)
     Public DD3585 As New Location("3585 Didion Dr", New Vector3(-437.985, 545.711, 121.246), LocationType.Residential, New Vector3(-437.14, 540.93, 122.13), 352)
     Public DD3583 As New Location("3583 Didion Dr", New Vector3(-379.833, 572.336, 119.711), LocationType.Residential, New Vector3(-386.4, 505.07, 120.41), 330)
+
+
+    'Public MR6085 As New Location("6085 Milton Rd", New Vector3(-656.424,909.115,227.743), LocationType.Residential, New Vector3(), 0)
 
     Public Alta601 As New Location("601 Alta St", New Vector3(148.56, 63.6, 78.25), LocationType.Residential, New Vector3(124.5, 64.8, 79.74), 249)
     Public Alta602 As New Location("602 Alta St", New Vector3(138.26, 38.42, 71.89), LocationType.Residential, New Vector3(108.75, 54.78, 77.77), 282)
