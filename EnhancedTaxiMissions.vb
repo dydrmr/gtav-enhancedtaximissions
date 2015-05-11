@@ -476,7 +476,6 @@ Public Class EnhancedTaxiMissions
 
             If isMinigameActive = True Then
                 'PRINT("Limo missions ended.")
-                GTA.Native.Function.Call(Native.Hash.CAN_PLAYER_START_MISSION, 1)
                 EndMinigame()
                 isMinigameActive = False
             Else
@@ -487,21 +486,20 @@ Public Class EnhancedTaxiMissions
                     If maxSeats >= 3 Then
                         Dim veh As String = Game.Player.Character.CurrentVehicle.DisplayName
 
-                        If veh = "TAXI" Or veh = "STRETCH" Or veh = "SCHAFTER" Or veh = "SUPERD" Or veh = "ORACLE" Or veh = "WASHINGTON" Then
+                        If veh = "TAXI" Or veh = "STRETCH" Or veh = "SCHAFTER" Or veh = "SUPERD" Or veh = "ORACLE" Or veh = "WASHINGT" Then
                             'PRINT("Limo missions started.")
-                            GTA.Native.Function.Call(Native.Hash.CAN_PLAYER_START_MISSION, 0)
                             StartMinigame()
                             isMinigameActive = True
                         Else
-                            PRINT("Enhanced taxi missions can be started in a Taxi, Stretch, Schafter, Super Drop, Oracle, or Washington.")
+                            GTA.UI.Notify("Taxi missions can be started in a Taxi, Stretch, Schafter, Super Drop, Oracle, or Washington.")
                         End If
 
                     Else
-                        PRINT("Enhanced taxi missions can be started in a Taxi, Stretch, Schafter, Super Drop, Oracle, or Washington.")
+                        GTA.UI.Notify("Taxi missions can be started in a Taxi, Stretch, Schafter, Super Drop, Oracle, or Washington.")
                     End If
 
                 Else
-                    PRINT("Enhanced taxi missions can be started in a Taxi, Stretch, Schafter, Super Drop, Oracle, or Washington.")
+                    GTA.UI.Notify("Taxi missions can be started in a Taxi, Stretch, Schafter, Super Drop, Oracle, or Washington.")
                 End If
 
             End If
@@ -1372,4 +1370,5 @@ End Module
 '   SET RELATIONSHIPS BETWEEN THEM SOMEHOW?
 '   OR GROUP THEM?
 'CHECK IF PEDS ARE DEAD
+'DISABLE OTHER MISSION MARKERS / TRIGGERS WHEN THIS MINIGAME IS ACTIVE
 
