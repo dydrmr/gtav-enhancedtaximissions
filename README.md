@@ -18,6 +18,7 @@ A ScriptHookVDotNet mod for Grand Theft Auto V, which aims to improve the taxi d
 
 #In-Game
 - Press the "L" key to toggle the missions on and off
+- If a passenger gets stuck while trying to get into the vehicle, you can use the horn once to get the passenger to retry entering the vehicle. If it still doesn't work, toggle the missions off and on to reset.
 
 #Contributions
 ...are welcome. This is my first gitHub project, still learning the ropes. I'm also a casual programmer, so my code may not be the prettiest to look at!
