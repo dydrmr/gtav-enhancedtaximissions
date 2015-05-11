@@ -63,6 +63,8 @@ Public Class EnhancedTaxiMissions
     Public updateDist1 As Boolean = False
     Public updateDist2 As Boolean = False
 
+    Public testPed As Ped
+
     Public Enum MiniGameStages
         Standby                 '0
         DrivingToOrigin         '1
@@ -85,12 +87,12 @@ Public Class EnhancedTaxiMissions
         'Haven't quite figured out how to save to an ini file yet.
 
         If k.KeyCode = Keys.Multiply Then
-            Dim pos As Vector3 = Game.Player.Character.Position
-            Dim hdg As Single = Game.Player.Character.Heading
+            'Dim pos As Vector3 = Game.Player.Character.Position
+            'Dim hdg As Single = Game.Player.Character.Heading
 
-            Dim n As String = Game.GetUserInput(64)
+            'Dim n As String = Game.GetUserInput(64)
 
-            Settings.SetValue("POSITIONS", n, "(" & Math.Round(pos.X, 2) & ", " & Math.Round(pos.Y, 2) & ", " & Math.Round(pos.Z, 2) & "), " & Math.Round(hdg))
+            'Settings.SetValue("POSITIONS", n, "(" & Math.Round(pos.X, 2) & ", " & Math.Round(pos.Y, 2) & ", " & Math.Round(pos.Z, 2) & "), " & Math.Round(hdg))
         End If
     End Sub
 
@@ -212,13 +214,13 @@ Public Class EnhancedTaxiMissions
     Public Sub updateRoutes()
         If IngameMinute Mod 3 = 0 Then
             If MiniGameStage = MiniGameStages.DrivingToOrigin Then
-                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.ID, 0)
-                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.ID, 1)
+                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 0)
+                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 1)
             End If
 
             If MiniGameStage = MiniGameStages.DrivingToDestination Then
-                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.ID, 0)
-                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.ID, 1)
+                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.Handle, 0)
+                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.Handle, 1)
             End If
         End If
     End Sub
@@ -538,13 +540,13 @@ Public Class EnhancedTaxiMissions
 
         If OriginBlip IsNot Nothing Then
             If OriginBlip.Exists Then
-                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.ID, 0)
+                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 0)
             End If
         End If
 
         If DestinationBlip IsNot Nothing Then
             If DestinationBlip.Exists Then
-                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.ID, 0)
+                GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.Handle, 0)
             End If
         End If
 
@@ -603,9 +605,31 @@ Public Class EnhancedTaxiMissions
             FareDistance = World.GetDistance(StartPoint, EndPoint)
         End If
         FareDistance *= 0.621371
-        FareTotal = CInt(FareBase + (FareDistance * FarePerMile))
+        FareTotal = CInt(Math.Round(FareBase + (FareDistance * FarePerMile)))
 
         PRINT("DIS: " & Math.Round(FareDistance, 2) & " mi / $" & FareTotal)
+    End Sub
+
+    Public Sub TaskSequenceTest(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
+
+        If k.KeyCode = Keys.Multiply Then
+            Dim pos As Vector3 = Game.Player.Character.Position + Game.Player.Character.ForwardVector * 4
+            testPed = GTA.Native.Function.Call(Of Ped)(Native.Hash.CREATE_RANDOM_PED, pos.X, pos.Y, pos.Z)
+
+            Dim ts As New TaskSequence()
+            ts.AddTask.UseMobilePhone()
+            ts.Close()
+            testPed.IsEnemy = False
+        End If
+
+    End Sub
+
+    Public Sub DeleteTemporaryPed(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
+
+        If k.KeyCode = Keys.Divide Then
+            testPed.MarkAsNoLongerNeeded()
+        End If
+
     End Sub
 
 
@@ -633,7 +657,7 @@ Public Class EnhancedTaxiMissions
 
         OriginBlip = World.CreateBlip(Origin.Coords)
         OriginBlip.Color = BlipColor.Blue
-        GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.ID, 1)
+        GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 1)
 
         updateDist1 = True
         MiniGameStage = MiniGameStages.DrivingToOrigin
@@ -651,6 +675,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lBar)
                     .AddRange(lMotelLS)
                     .AddRange(lStripClub)
+                    .AddRange(lTheater)
                 End With
                 With PotentialDestinations
                     .AddRange(lHotelLS)
@@ -710,6 +735,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lReligious)
                     .AddRange(lShopping)
                     .AddRange(lOffice)
+                    .AddRange(lTheater)
                 End With
 
             Case 16 To 19
@@ -724,6 +750,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lShopping)
                     .AddRange(lReligious)
                     .AddRange(lOffice)
+                    .AddRange(lTheater)
                 End With
                 With PotentialDestinations
                     .AddRange(lAirportD)
@@ -735,6 +762,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lRestaurant)
                     .AddRange(lShopping)
                     .AddRange(lBar)
+                    .AddRange(lTheater)
                 End With
 
             Case 20 To 23
@@ -749,6 +777,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lShopping)
                     .AddRange(lBar)
                     .AddRange(lStripClub)
+                    .AddRange(lTheater)
                 End With
                 With PotentialDestinations
                     .AddRange(lResidential)
@@ -760,6 +789,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lShopping)
                     .AddRange(lBar)
                     .AddRange(lStripClub)
+                    .AddRange(lTheater)
                 End With
 
             Case Else
@@ -910,9 +940,14 @@ Public Class EnhancedTaxiMissions
 
         calculateFare(Origin.Coords, Destination.Coords)
 
-        UI_DispatchStatus = "Customer has been notified of your arrival"
         If isThereASecondCustomer = True Then
             UI_DispatchStatus = "Customers have been notified of your arrival"
+        Else
+            If Customer.isCeleb Then
+                UI_DispatchStatus = Customer.Name & " has been notified of your arrival"
+            Else
+                UI_DispatchStatus = "Customer has been notified of your arrival"
+            End If
         End If
         MiniGameStage = MiniGameStages.PedWalkingToCar
 
@@ -920,18 +955,18 @@ Public Class EnhancedTaxiMissions
 
     Private Sub PedHasReachedCar()
         If CustomerPed.Exists Then
-            CustomerPed.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, 2, 10000)
+            CustomerPed.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, 2, 16000)
         End If
 
         If isThereASecondCustomer = True Then
             If Customer2Ped.Exists = True Then
-                Customer2Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, 1, 10000)
+                Customer2Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, 1, 16000)
             End If
         End If
 
         If isThereAThirdCustomer = True Then
             If Customer3Ped.Exists = True Then
-                Customer3Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, 0, 10000)
+                Customer3Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, 0, 16000)
             End If
         End If
 
@@ -943,7 +978,7 @@ Public Class EnhancedTaxiMissions
         DestinationBlip = World.CreateBlip(Destination.Coords)
         DestinationBlip.Color = BlipColor.Blue
 
-        GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.ID, 1)
+        GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.Handle, 1)
         'PRINT("DestinationBlip: " & DestinationBlip)
 
         UI_DispatchStatus = "Please drive the customer to the destination"
@@ -975,6 +1010,8 @@ Public Class EnhancedTaxiMissions
         If isThereAThirdCustomer = True Then
             Customer3Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         End If
+
+        Wait(250)
 
         Dim isDestinationSet As Boolean
         If Destination.PedEnd.X = 0 And Destination.PedEnd.Y = 0 And Destination.PedEnd.Z = 0 Then
@@ -1136,6 +1173,7 @@ Public Module Places
     Public lOffice As New List(Of Location)
     Public lStripClub As New List(Of Location)
     Public lEpsilon As New List(Of Location)
+    Public lTheater As New List(Of Location)
 
     'SCHOOL
     'Public ULSA1 As New Location("ULSA Campus", New Vector3(-1572.412, 175.073, 57.622), LocationType.School, New Vector3(), 0)
@@ -1168,6 +1206,8 @@ Public Module Places
     Public WigVesp As New Location("Wigwam Burger, Vespucci", New Vector3(-850.75, -1149.78, 5.6), LocationType.FastFood, New Vector3(-861.85, -1142.63, 6.99), 234)
     Public BeanLitSeo As New Location("Bean Machine, Little Seoul", New Vector3(-826.09, -641.22, 26.91), LocationType.FastFood, New Vector3(-839, -609.28, 29.03), 146)
     Public SHoLitSeo As New Location("S. Ho Korean Noodle House, Little Seoul", New Vector3(-826.09, -641.22, 26.91), LocationType.FastFood, New Vector3(-798.27, -635.43, 29.03), 100)
+    Public NoodlLS As New Location("Noodle Exchange, Legion Square", New Vector3(260.26, -970.32, 28.7), LocationType.FastFood, New Vector3(272.12, -964.79, 29.3), 42)
+    Public CoolBeans As New Location("Cool Beans, Legion Square", New Vector3(260.26, -970.32, 28.7), LocationType.FastFood, New Vector3(263.08, -981.74, 29.36), 86)
 
     'RESTAURANT
     Public LaSpada As New Location("La Spada", New Vector3(-1046.724, -1398.146, 4.949), LocationType.Restaurant, New Vector3(-1038.01, -1396.84, 5.55), 84)
@@ -1195,10 +1235,17 @@ Public Module Places
     Public WinfreyCasti As New Location("Winfrey Castiglione", New Vector3(-659.29, -276.9, 35.02), LocationType.Shopping, New Vector3(-649.25, -276.35, 35.73), 95)
     Public LittlePortola As New Location("Little Portola", New Vector3(-676.69, -215.97, 36.31), LocationType.Shopping, New Vector3(-662.16, -227.05, 37.47), 53)
     Public ArirangPlaza As New Location("Arirang Plaza", New Vector3(-688.49, -826.51, 23.15), LocationType.Shopping, New Vector3(-690.75, -813.6, 23.93), 179)
+    Public SimmetAlley As New Location("Simmet Alley", New Vector3(455.45, -820.15, 27.07), LocationType.Shopping, New Vector3(460.21, -794.62, 27.36), 89)
+    Public Krapea As New Location("Krapea, Textile City", New Vector3(330.75, -772.94, 28.68), LocationType.Shopping, New Vector3(337.8, -777.29, 29.27), 69)
 
     'ENTERTAINMENT
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
     Public Tramway As New Location("Pala Springs Aerial Tramway", New Vector3(-771.53, 5582.98, 33.01), LocationType.Entertainment, New Vector3(-755.66, 5583.63, 36.71), 91) With {.PedEnd = New Vector3(-745.23, 5594.77, 41.65)}
+    Public LSGC As New Location("Los Santos Gun Club", New Vector3(16.86, -1125.85, 29.3), LocationType.Entertainment, New Vector3(20.24, -1107.24, 29.8), 173)
+
+    'THEATER
+    Public LosSantosTheater As New Location("Los Santos Theater", New Vector3(345.33, -867.2, 28.72), LocationType.Theater, New Vector3(353.7, -874.09, 29.29), 8)
+    Public TenCentTheater As New Location("Ten Cent Theater", New Vector3(401.16, -711.92, 28.7), LocationType.Theater, New Vector3(394.68, -710.04, 29.28), 254)
 
     'S CLUB
     Public StripHornbills As New Location("Hornbill's", New Vector3(-380.469, 230.008, 83.622), LocationType.StripClub, New Vector3(-386.78, 220.33, 83.79), 6)
@@ -1207,6 +1254,11 @@ Public Module Places
     'WORK
     Public LombankLittleSeoul As New Location("Lombank, Little Seoul", New Vector3(-688.22, -648.09, 30.37), LocationType.Office, New Vector3(-687.1, -617.62, 31.56), 157)
     Public AuguryIns As New Location("Augury Insurance", New Vector3(-289.45, -412.25, 29.25), LocationType.Office, New Vector3(-296.18, -424.89, 30.24), 325)
+    Public IAA As New Location("International Affairs Agency", New Vector3(106.08, -611.18, 43.63), LocationType.Office, New Vector3(117.54, -622.52, 44.24), 53)
+    Public FIB As New Location("Federal Investigation Bureau", New Vector3(63.71, -727.4, 43.63), LocationType.Office, New Vector3(102.02, -742.66, 45.75), 103)
+    Public UD As New Location("Union Depository", New Vector3(-8.13, -741.36, 43.74), LocationType.Office, New Vector3(5.28, -709.38, 45.97), 184)
+    Public MB As New Location("Maze Bank Tower", New Vector3(-50.06, -785.19, 43.75), LocationType.Office, New Vector3(-66.16, -800.06, 44.23), 334)
+    Public DG As New Location("Daily Globe International", New Vector3(-300.64, -620.04, 33), LocationType.Office, New Vector3(-317.41, -610.01, 33.56), 250)
 
     'HOTEL
     Public HotelRichman As New Location("Richman Hotel", New Vector3(-1285.498, 294.565, 64.368), LocationType.HotelLS, New Vector3(-1274.5, 313.97, 65.51), 151)
@@ -1218,6 +1270,7 @@ Public Module Places
     Public HotelVCRock1 As New Location("Von Crastenburg Hotel, Richman", New Vector3(-1208.148, -128.829, 40.71), LocationType.HotelLS, New Vector3(-1239.6, -156.26, 40.41), 62)
     Public HotelVCRock2 As New Location("Von Crastenburg Hotel, Richman", New Vector3(-1228.485, -193.734, 38.8), LocationType.HotelLS, New Vector3(-1239.6, -156.26, 40.41), 62)
     Public HotelEmissary As New Location("Emissary Hotel", New Vector3(116.09, -935.88, 28.94), LocationType.HotelLS, New Vector3(106.31, -933.52, 29.79), 254)
+    Public HotelAlesandro As New Location("Alesandro Hotel", New Vector3(318.07, -732.85, 28.73), LocationType.HotelLS, New Vector3(309.89, -728.62, 29.32), 251)
 
     'MOTEL
     Public PerreraBeach As New Location("Perrera Beach Motel", New Vector3(-1480.4, -669.76, 28.23), LocationType.MotelLS, New Vector3(-1478.68, -649.89, 29.58), 162) With {.PedEnd = New Vector3(-1479.64, -674.43, 29.04)}
@@ -1289,8 +1342,19 @@ Public Module Places
     Public DD3585 As New Location("3585 Didion Dr", New Vector3(-437.985, 545.711, 121.246), LocationType.Residential, New Vector3(-437.14, 540.93, 122.13), 352)
     Public DD3583 As New Location("3583 Didion Dr", New Vector3(-379.833, 572.336, 119.711), LocationType.Residential, New Vector3(-386.4, 505.07, 120.41), 330)
 
-
-    'Public MR6085 As New Location("6085 Milton Rd", New Vector3(-656.424,909.115,227.743), LocationType.Residential, New Vector3(), 0)
+    Public MR6085 As New Location("6085 Milton Rd", New Vector3(-656.424, 909.115, 227.743), LocationType.Residential, New Vector3(-659.34, 888.76, 229.25), 13)
+    Public MR4589 As New Location("4589 Milton Rd", New Vector3(-597.672, 863.667, 210.149), LocationType.Residential, New Vector3(-599, 852.85, 211.25), 6)
+    Public MR4588 As New Location("4588 Milton Rd", New Vector3(-549.421, 836.533, 197.679), LocationType.Residential, New Vector3(-548.63, 827.78, 197.51), 27)
+    Public MR4587 As New Location("4587 Milton Rd", New Vector3(-479.269, 800.352, 180.562), LocationType.Residential, New Vector3(-496.07, 799.09, 184.19), 257)
+    Public MR4586 As New Location("4586 Milton Rd", New Vector3(-481.381, 742.255, 163.363), LocationType.Residential, New Vector3(-492.34, 737.86, 162.83), 314)
+    Public MR4585 As New Location("4585 Milton Rd", New Vector3(-529.918, 700.58, 149.313), LocationType.Residential, New Vector3(-533.23, 708.61, 152.91), 211)
+    Public MR2850 As New Location("2850 Milton Rd", New Vector3(-509.213, 625.94, 131.747), LocationType.Residential, New Vector3(-521.85, 627.93, 137.97), 275)
+    Public MR2848 As New Location("2848 Milton Rd", New Vector3(-506.436, 576.881, 119.951), LocationType.Residential, New Vector3(-519.14, 594.95, 120.84), 207)
+    Public MR3545 As New Location("3545 Milton Rd", New Vector3(-532.605, 536.938, 110.266), LocationType.Residential, New Vector3(-527.28, 518.16, 112.94), 46)
+    Public MR2846 As New Location("2846 Milton Rd", New Vector3(-540.44, 542.03, 109.99), LocationType.Residential, New Vector3(-552.33, 540, 110.33), 229)
+    Public MR3543 As New Location("3543 Milton Rd", New Vector3(-545.46, 490.96, 103.51), LocationType.Residential, New Vector3(-538.21, 477.76, 103.18), 22)
+    Public MR3548 As New Location("3548 Milton Rd", New Vector3(-522.28, 396.8, 93.29), LocationType.Residential, New Vector3(-502.37, 399.91, 97.41), 62)
+    Public MR3842 As New Location("3842 Milton Rd", New Vector3(-483.19, 598.37, 126.51), LocationType.Residential, New Vector3(-475.24, 585.9, 128.68), 44)
 
     Public Alta601 As New Location("601 Alta St", New Vector3(148.56, 63.6, 78.25), LocationType.Residential, New Vector3(124.5, 64.8, 79.74), 249)
     Public Alta602 As New Location("602 Alta St", New Vector3(138.26, 38.42, 71.89), LocationType.Residential, New Vector3(108.75, 54.78, 77.77), 282)
@@ -1327,6 +1391,8 @@ Public Module Places
                     lSport.Add(l)
                 Case LocationType.Office
                     lOffice.Add(l)
+                Case LocationType.Theater
+                    lTheater.Add(l)
             End Select
         Next
     End Sub
