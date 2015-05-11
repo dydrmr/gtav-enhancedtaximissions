@@ -32,8 +32,6 @@ Public Class EnhancedTaxiMissions
     Public Customer2Ped As Ped
     Public Customer3Ped As Ped
 
-    Public PreviousPed1, PreviousPed2, PreviousPed3 As Ped
-
     Public isCustomerPedSpawned As Boolean = False
     Public isDestinationCleared As Boolean = False
     Public isCustomerNudged1 As Boolean = False
@@ -99,8 +97,8 @@ Public Class EnhancedTaxiMissions
 
 
     Public Sub New()
-        GTA.Native.Function.Call(Native.Hash.SET_PED_POPULATION_BUDGET, 700)
-        GTA.Native.Function.Call(Native.Hash.SET_VEHICLE_POPULATION_BUDGET, 700)
+        'GTA.Native.Function.Call(Native.Hash.SET_PED_POPULATION_BUDGET, 700)
+        'GTA.Native.Function.Call(Native.Hash.SET_VEHICLE_POPULATION_BUDGET, 700)
 
         ListOfPeople.Remove(NonCeleb)
 
@@ -416,23 +414,24 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub checkIfCloseEnoughToClearDestination()
+        System.Diagnostics.Debug.Print("Made it to point 1")
         If MiniGameStage = MiniGameStages.DrivingToDestination Then
             Dim ppos As Vector3 = Game.Player.Character.Position
             Dim dpos As Vector3 = Destination.Coords
-            Dim distance As Single = World.GetDistance(ppos, dpos) 'GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, ppos.X, ppos.Y, ppos.Z, dpos.X, dpos.Y, dpos.Z, 1)
+            Dim distance As Single = World.GetDistance(ppos, dpos)
 
             If distance < 60 Then
                 Dim pos As Vector3 = Destination.PedStart
                 If isDestinationCleared = False Then
                     isDestinationCleared = True
 
-                    GTA.Native.Function.Call(Native.Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 15)
-
+                    'GTA.Native.Function.Call(Native.Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 15)
                     'PRINT("Destination Cleared")
                 End If
             End If
 
         End If
+        System.Diagnostics.Debug.Print("Made it to point 2")
     End Sub
 
     Public Sub checkIfPlayerHasArrivedAtDestination()
@@ -866,11 +865,16 @@ Public Class EnhancedTaxiMissions
 
     Private Sub PlayerHasStoppedAtOrigin()
 
-        Dim ppos As Vector3 = Game.Player.Character.Position
+        Dim ppos As Vector3
+        If Game.Player.Character.IsInVehicle Then
+            ppos = Game.Player.Character.CurrentVehicle.Position
+        Else
+            ppos = Game.Player.Character.Position
+        End If
+
 
         If CustomerPed.Exists Then
             CustomerPed.Task.GoTo(ppos, False)
-            'GTA.Native.Function.Call(Native.Hash.TASK_FOLLOW_NAV_MESH_TO_COORD, CustomerPed, ppos.X, ppos.Y, ppos.Z, 2, -2, 1)
         End If
 
         If isThereASecondCustomer = True Then
@@ -958,30 +962,14 @@ Public Class EnhancedTaxiMissions
         'DestinationBlip.Remove
         'PRINT("Destination Blip Removed")
 
+        CustomerPed.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
 
-        'TO-DO
-        'RE-IMPLEMENT TASK SEQUENCES ONCE THEY GET FIXED IN SCRIPTHOOKVDOTNET
-        Dim s1, s2, s3 As New TaskSequence
-
-        s1 = New TaskSequence(CustomerPed.ID)
-
-        s1.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-        s1.AddTask.Wait(1500)
-        'CustomerPed.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         If isThereASecondCustomer = True Then
-            s2 = New TaskSequence(Customer2Ped.ID)
-            s2.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-            s2.AddTask.Wait(1500)
-            'Customer2Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+            Customer2Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         End If
         If isThereAThirdCustomer = True Then
-            s3 = New TaskSequence(Customer3Ped.ID)
-            s3.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-            s3.AddTask.Wait(1500)
-            'Customer3Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+            Customer3Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         End If
-
-
 
         Dim isDestinationSet As Boolean
         If Destination.PedEnd.X = 0 And Destination.PedEnd.Y = 0 And Destination.PedEnd.Z = 0 Then
@@ -991,44 +979,36 @@ Public Class EnhancedTaxiMissions
         End If
 
         If isDestinationSet = False Then
-            s1.AddTask.GoTo(Destination.PedStart, False)
-            'CustomerPed.Task.GoTo(Destination.PedStart, False)
+            CustomerPed.Task.GoTo(Destination.PedStart, False)
         Else
-            s1.AddTask.GoTo(Destination.PedEnd, False)
-            'CustomerPed.Task.GoTo(Destination.PedEnd, False)
+            CustomerPed.Task.GoTo(Destination.PedEnd, False)
         End If
 
-        s1.AddTask.Wait(10000)
-        s1.CloseSequence()
         CustomerPed.MarkAsNoLongerNeeded()
 
         If isThereASecondCustomer = True Then
             If isDestinationSet = False Then
-                s2.AddTask.GoTo(Destination.PedStart, False)
-                'Customer2Ped.Task.GoTo(Destination.PedStart, False)
+                Customer2Ped.Task.GoTo(Destination.PedStart, False)
             Else
-                s2.AddTask.GoTo(Destination.PedEnd, False)
-                'Customer2Ped.Task.GoTo(Destination.PedEnd, False)
+                Customer2Ped.Task.GoTo(Destination.PedEnd, False)
             End If
-            s2.AddTask.Wait(10000)
-            s2.CloseSequence()
             Customer2Ped.MarkAsNoLongerNeeded()
         End If
 
         If isThereAThirdCustomer = True Then
             If isDestinationSet = False Then
-                s3.AddTask.GoTo(Destination.PedStart, False)
-                'Customer3Ped.Task.GoTo(Destination.PedStart, False)
+                Customer3Ped.Task.GoTo(Destination.PedStart, False)
             Else
-                s3.AddTask.GoTo(Destination.PedEnd, False)
-                'Customer3Ped.Task.GoTo(Destination.PedEnd, False)
+                Customer3Ped.Task.GoTo(Destination.PedEnd, False)
             End If
-            s3.AddTask.Wait(10000)
-            s3.CloseSequence()
             Customer3Ped.MarkAsNoLongerNeeded()
         End If
 
         payPlayer(FareTotal)
+
+        'TO-DO
+        'AUTOSAVE
+
         StartMinigame()
     End Sub
 
@@ -1187,6 +1167,7 @@ Public Module Places
     'RESTAURANT
     Public LaSpada As New Location("La Spada", New Vector3(-1046.724, -1398.146, 4.949), LocationType.Restaurant, New Vector3(-1038.01, -1396.84, 5.55), 84)
     Public ChebsEaterie As New Location("Chebs Eaterie", New Vector3(-730.21, -330.45, 35), LocationType.Restaurant, New Vector3(-735.26, -319.63, 36.22), 187)
+    Public CafeRedemption As New Location("Cafe Redemption", New Vector3(-641.08, -308.14, 34.21), LocationType.Restaurant, New Vector3(-634.26, -302.17, 35.06), 131)
 
     'BAR
     Public PipelineInn As New Location("Pipeline Inn", New Vector3(-2182.395, -391.984, 12.83), LocationType.Bar, New Vector3(-2192.54, -389.54, 13.47), 249)
@@ -1203,6 +1184,12 @@ Public Module Places
     Public ChumAmmu As New Location("AmmuNation, Chumash Plaza", New Vector3(-3153.66, 1062.2, 20.25), LocationType.Shopping, New Vector3(-3171.64, 1087.57, 20.84), 44)
     Public ChumNelsons As New Location("Nelson's General Store, Chumash Plaza", New Vector3(-3153.66, 1062.2, 20.25), LocationType.Shopping, New Vector3(-3152.25, 1110.59, 20.87), 232)
     Public PonsonRP As New Location("Ponsonbys Rockford Plaza", New Vector3(-148.33, -308.77, 37.83), LocationType.Shopping, New Vector3(-168.03, -299.35, 39.73), 306)
+    Public JonnyTung As New Location("Jonny Tung", New Vector3(-611.62, -316.21, 34), LocationType.Shopping, New Vector3(-620.14, -309.45, 34.82), 162)
+    Public HelgaKrepp As New Location("Helga Kreppsohle", New Vector3(-647.68, -297.63, 34.51), LocationType.Shopping, New Vector3(-638.52, -293.33, 35.3), 109)
+    Public Dalique As New Location("Dalique", New Vector3(-647.68, -297.63, 34.51), LocationType.Shopping, New Vector3(-643.21, -285.69, 35.5), 117)
+    Public WinfreyCasti As New Location("Winfrey Castiglione", New Vector3(-659.29, -276.9, 35.02), LocationType.Shopping, New Vector3(-649.25, -276.35, 35.73), 95)
+    Public LittlePortola As New Location("Little Portola", New Vector3(-676.69, -215.97, 36.31), LocationType.Shopping, New Vector3(-662.16, -227.05, 37.47), 53)
+    Public ArirangPlaza As New Location("Arirang Plaza", New Vector3(-688.49, -826.51, 23.15), LocationType.Shopping, New Vector3(-690.75, -813.6, 23.93), 179)
 
     'ENTERTAINMENT
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
@@ -1214,6 +1201,7 @@ Public Module Places
 
     'WORK
     Public LombankLittleSeoul As New Location("Lombank, Little Seoul", New Vector3(-688.22, -648.09, 30.37), LocationType.Office, New Vector3(-687.1, -617.62, 31.56), 157)
+    Public AuguryIns As New Location("Augury Insurance", New Vector3(-289.45, -412.25, 29.25), LocationType.Office, New Vector3(-296.18, -424.89, 30.24), 325)
 
     'HOTEL
     Public HotelRichman As New Location("Richman Hotel", New Vector3(-1285.498, 294.565, 64.368), LocationType.HotelLS, New Vector3(-1274.5, 313.97, 65.51), 151)
