@@ -689,7 +689,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lFastFood)
                     .AddRange(lShopping)
                     .AddRange(lReligious)
-                    .AddRange(lWork)
+                    .AddRange(lOffice)
                 End With
 
             Case 11 To 15
@@ -704,7 +704,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lRestaurant)
                     .AddRange(lReligious)
                     .AddRange(lShopping)
-                    .AddRange(lWork)
+                    .AddRange(lOffice)
                 End With
                 With PotentialDestinations
                     .AddRange(lAirportD)
@@ -717,7 +717,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lRestaurant)
                     .AddRange(lReligious)
                     .AddRange(lShopping)
-                    .AddRange(lWork)
+                    .AddRange(lOffice)
                 End With
 
             Case 16 To 19
@@ -731,7 +731,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lRestaurant)
                     .AddRange(lShopping)
                     .AddRange(lReligious)
-                    .AddRange(lWork)
+                    .AddRange(lOffice)
                 End With
                 With PotentialDestinations
                     .AddRange(lAirportD)
@@ -1124,6 +1124,8 @@ Public Enum LocationType
     Religious
     Media
     School
+    Office
+    Factory
 End Enum
 
 Public Class Location
@@ -1163,7 +1165,7 @@ Public Module Places
     Public lFastFood As New List(Of Location)
     Public lReligious As New List(Of Location)
     Public lSport As New List(Of Location)
-    Public lWork As New List(Of Location)
+    Public lOffice As New List(Of Location)
     Public lStripClub As New List(Of Location)
     Public lEpsilon As New List(Of Location)
 
@@ -1228,7 +1230,7 @@ Public Module Places
     Public StripVanUni As New Location("Vanilla Unicorn", New Vector3(133.93, -1307.91, 28.28), LocationType.StripClub, New Vector3(127.26, -1289.09, 29.28), 206)
 
     'WORK
-    Public LombankLittleSeoul As New Location("Lombank, Little Seoul", New Vector3(-688.22, -648.09, 30.37), LocationType.Entertainment, New Vector3(-687.1, -617.62, 31.56), 157)
+    Public LombankLittleSeoul As New Location("Lombank, Little Seoul", New Vector3(-688.22, -648.09, 30.37), LocationType.Office, New Vector3(-687.1, -617.62, 31.56), 157)
 
     'HOTEL
     Public HotelRichman As New Location("Richman Hotel", New Vector3(-1285.498, 294.565, 64.368), LocationType.HotelLS, New Vector3(-1274.5, 313.97, 65.51), 151)
@@ -1344,6 +1346,8 @@ Public Module Places
                     lShopping.Add(l)
                 Case LocationType.Sport
                     lSport.Add(l)
+                Case LocationType.Office
+                    lOffice.Add(l)
             End Select
         Next
     End Sub
