@@ -22,7 +22,7 @@ Public Class EnhancedTaxiMissions
     Public PotentialOrigins, PotentialDestinations As New List(Of Location)
 
     Public OriginBlip, DestinationBlip As Blip
-    Public OriginMarker, DestinationMarker As Integer
+    Public OriginMarker, DestinationMarker As Prop
 
     Public Customer As Person
     Public CustomerPed As Ped
@@ -87,14 +87,34 @@ Public Class EnhancedTaxiMissions
         'Haven't quite figured out how to save to an ini file yet.
 
         If k.KeyCode = Keys.Multiply Then
-            'Dim pos As Vector3 = Game.Player.Character.Position
-            'Dim hdg As Single = Game.Player.Character.Heading
 
-            'Dim n As String = Game.GetUserInput(64)
+            Settings.SetValue("TestSection", "TestName", "TestValue")
 
-            'Settings.SetValue("POSITIONS", n, "(" & Math.Round(pos.X, 2) & ", " & Math.Round(pos.Y, 2) & ", " & Math.Round(pos.Z, 2) & "), " & Math.Round(hdg))
+            Dim pos As Vector3 = Game.Player.Character.Position
+            Dim hdg As Single = Game.Player.Character.Heading
+
+            Dim positionName As String = Game.GetUserInput(64)
+            Dim value1 As String = "(" & Math.Round(pos.X, 2) & ", " & Math.Round(pos.Y, 2) & ", " & Math.Round(pos.Z, 2) & ")"
+            Dim value2 As String = value1 & ", " & Math.Round(hdg)
+
+            If Game.Player.Character.IsInVehicle Then
+                Settings.SetValue("POSITIONS", positionName, value1)
+            Else
+                Settings.SetValue("POSITIONS", positionName, value2)
+            End If
         End If
     End Sub
+
+    Public Sub SpawnObject(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
+        If k.KeyCode = Keys.Divide Then
+            PRINT("Starting...")
+            Dim mdl As Model = New GTA.Model(1828647717)
+            Dim pos As Vector3 = Game.Player.Character.Position + Game.Player.Character.ForwardVector * 3 + New Vector3(0, 0, 0.5)
+            Dim obj As Prop = World.CreateProp(mdl, pos, False, False)
+            PRINT("Done.")
+        End If
+    End Sub
+
 
 
 
@@ -212,7 +232,7 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub updateRoutes()
-        If IngameMinute Mod 3 = 0 Then
+        If IngameMinute Mod 5 = 0 Then
             If MiniGameStage = MiniGameStages.DrivingToOrigin Then
                 GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 0)
                 GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 1)
@@ -234,7 +254,7 @@ Public Class EnhancedTaxiMissions
         If MiniGameStage = MiniGameStages.DrivingToOrigin Then
             Dim ppos As Vector3 = Game.Player.Character.Position
             Dim opos As Vector3 = Origin.Coords
-            Dim distance As Single = World.GetDistance(ppos, opos) 'GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, ppos.X, ppos.Y, ppos.Z, opos.X, opos.Y, opos.Z, 1)
+            Dim distance As Single = World.GetDistance(ppos, opos)
 
             If distance < 100 Then
                 Dim pos As Vector3 = Origin.PedStart
@@ -252,22 +272,18 @@ Public Class EnhancedTaxiMissions
 
                     'TO-DO
                     'PUT PEDS INTO A GROUP OR SET THEIR RELATIONSHIPS TO FRIENDLY SO THEY DON'T PANIC WHEN THEY ALL GET INTO THE CAR
-                    'GTA.Native.Function.Call(Native.Hash.CREATE_GROUP, 1)
-                    'GTA.Native.Function.Call(Native.Hash.SET_PED_AS_GROUP_LEADER, CustomerPed, 1)
+
 
                     If isThereASecondCustomer = True Then
                         Customer2Ped = GTA.Native.Function.Call(Of Ped)(Native.Hash.CREATE_RANDOM_PED, pos.X + 0.2, pos.Y + 0.2, pos.Z + 0.3)
-                        GTA.Native.Function.Call(Native.Hash.SET_PED_AS_GROUP_MEMBER, Customer2Ped, 1)
                     End If
 
                     If isThereAThirdCustomer = True Then
                         Customer3Ped = GTA.Native.Function.Call(Of Ped)(Native.Hash.CREATE_RANDOM_PED, pos.X - 0.2, pos.Y - 0.2, pos.Z + 0.3)
-                        GTA.Native.Function.Call(Native.Hash.SET_PED_AS_GROUP_MEMBER, Customer3Ped, 1)
                     End If
 
                     'TO-DO
                     'CREATE MISSION MARKER (LIKE THE ACTUAL TAXI MISSIONS)
-                    'GTA.Native.Function.Call(Native.Hash.CREATE_OBJECT, New GTA.Model("mk_arrow").Hash, opos.X, opos.Y, opos.Z, OriginMarker, 1)
                     'PRINT("Ped spawned & area cleared")
                 End If
             End If
@@ -610,27 +626,6 @@ Public Class EnhancedTaxiMissions
         PRINT("DIS: " & Math.Round(FareDistance, 2) & " mi / $" & FareTotal)
     End Sub
 
-    Public Sub TaskSequenceTest(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
-
-        If k.KeyCode = Keys.Multiply Then
-            Dim pos As Vector3 = Game.Player.Character.Position + Game.Player.Character.ForwardVector * 4
-            testPed = GTA.Native.Function.Call(Of Ped)(Native.Hash.CREATE_RANDOM_PED, pos.X, pos.Y, pos.Z)
-
-            Dim ts As New TaskSequence()
-            ts.AddTask.UseMobilePhone()
-            ts.Close()
-            testPed.IsEnemy = False
-        End If
-
-    End Sub
-
-    Public Sub DeleteTemporaryPed(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
-
-        If k.KeyCode = Keys.Divide Then
-            testPed.MarkAsNoLongerNeeded()
-        End If
-
-    End Sub
 
 
 
@@ -814,6 +809,7 @@ Public Class EnhancedTaxiMissions
 
     Private Sub SelectValidOrigin(Places As List(Of Location))
 
+        PRINT("Valid Origins: " & Places.Count)
         If Places.Count = 0 Then Places.AddRange(ListOfPlaces)
 
         Dim NearestLocation As Location
@@ -827,35 +823,49 @@ Public Class EnhancedTaxiMissions
             End If
         Next
 
-        If NearestLocationDistance > 700 Then
+        If NearestLocationDistance > 1000 Then
             NearestLocationDistance += 30%
         Else
-            NearestLocationDistance = 700
+            NearestLocationDistance = 1000
         End If
 
         Dim r As Integer
         Dim distance As Single
+        Dim c As Integer = 0
         Do
             r = RND.Next(0, Places.Count)
             Origin = Places(r)
             Dim ppos As Vector3 = Game.Player.Character.Position
             distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, ppos.X, ppos.Y, ppos.Z, 1)
-        Loop While distance > NearestLocationDistance Or Origin.isValidDestination = False  'Or distance < 50
+            c += 1
+            If c > 10 Then
+                r = RND.Next(0, ListOfPlaces.Count)
+                Origin = ListOfPlaces(r)
+                distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, ppos.X, ppos.Y, ppos.Z, 1)
+            End If
+        Loop While distance > NearestLocationDistance   'Or distance < 50
 
         UI_Origin = Origin.Name
     End Sub
 
     Private Sub SelectValidDestination(Places As List(Of Location))
-
+        PRINT("Valid Destinations: " & Places.Count)
         If Places.Count = 0 Then Places.AddRange(ListOfPlaces)
 
         Dim r As Integer
         Dim distance As Single
+        Dim c As Integer = 0
         Do
             r = RND.Next(0, Places.Count)
             Destination = Places(r)
             distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, Destination.Coords.X, Destination.Coords.Y, Destination.Coords.Z, 1)
-        Loop While Origin.Name = Destination.Name Or distance < 500
+            c += 1
+            If c > 10 Then
+                r = RND.Next(0, ListOfPlaces.Count)
+                Destination = ListOfPlaces(r)
+                distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, Destination.Coords.X, Destination.Coords.Y, Destination.Coords.Z, 1)
+            End If
+        Loop While Origin.Name = Destination.Name Or distance < 500 Or Origin.isValidDestination = False
 
         UI_Destination = Destination.Name
     End Sub
@@ -918,17 +928,20 @@ Public Class EnhancedTaxiMissions
 
 
         If CustomerPed.Exists Then
+            'CustomerPed.Task.FollowPointRoute(ppos)
             CustomerPed.Task.GoTo(ppos, False)
         End If
 
         If isThereASecondCustomer = True Then
             If Customer2Ped.Exists = True Then
+                'Customer2Ped.Task.FollowPointRoute(ppos)
                 Customer2Ped.Task.GoTo(ppos, False)
             End If
         End If
 
         If isThereAThirdCustomer = True Then
             If Customer3Ped.Exists = True Then
+                'Customer3Ped.Task.FollowPointRoute(ppos)
                 Customer3Ped.Task.GoTo(ppos, False)
             End If
         End If
@@ -936,6 +949,7 @@ Public Class EnhancedTaxiMissions
         'TO-DO
         'REMOVE GPS ROUTE TO ORIGIN BLIP
         'OriginBlip.Remove
+        'REMOVE MISSION MARKER
         'PRINT("Origin Blip Removed")
 
         calculateFare(Origin.Coords, Destination.Coords)
@@ -1011,7 +1025,7 @@ Public Class EnhancedTaxiMissions
             Customer3Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
         End If
 
-        Wait(250)
+        Wait(100)
 
         Dim isDestinationSet As Boolean
         If Destination.PedEnd.X = 0 And Destination.PedEnd.Y = 0 And Destination.PedEnd.Z = 0 Then
@@ -1020,33 +1034,31 @@ Public Class EnhancedTaxiMissions
             isDestinationSet = True
         End If
 
-        If isDestinationSet = False Then
-            CustomerPed.Task.GoTo(Destination.PedStart, False)
-        Else
-            CustomerPed.Task.GoTo(Destination.PedEnd, False)
-        End If
+        Dim LeaveSequence As New TaskSequence
 
+        If isDestinationSet = False Then
+            'LeaveSequence.AddTask.FollowPointRoute(Destination.PedStart)
+            LeaveSequence.AddTask.GoTo(Destination.PedStart, False)
+        Else
+            'LeaveSequence.AddTask.FollowPointRoute(Destination.PedEnd)
+            LeaveSequence.AddTask.GoTo(Destination.PedEnd, False)
+        End If
+        LeaveSequence.AddTask.Wait(20000)
+        CustomerPed.Task.PerformSequence(LeaveSequence)
         CustomerPed.MarkAsNoLongerNeeded()
 
         If isThereASecondCustomer = True Then
-            If isDestinationSet = False Then
-                Customer2Ped.Task.GoTo(Destination.PedStart, False)
-            Else
-                Customer2Ped.Task.GoTo(Destination.PedEnd, False)
-            End If
+            Customer2Ped.Task.PerformSequence(LeaveSequence)
             Customer2Ped.MarkAsNoLongerNeeded()
         End If
 
         If isThereAThirdCustomer = True Then
-            If isDestinationSet = False Then
-                Customer3Ped.Task.GoTo(Destination.PedStart, False)
-            Else
-                Customer3Ped.Task.GoTo(Destination.PedEnd, False)
-            End If
+            Customer3Ped.Task.PerformSequence(LeaveSequence)
             Customer3Ped.MarkAsNoLongerNeeded()
         End If
 
         payPlayer(FareTotal)
+        GTA.UI.Notify("Fare earned: $" & FareTotal)
 
         'TO-DO
         'AUTOSAVE
@@ -1242,6 +1254,7 @@ Public Module Places
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
     Public Tramway As New Location("Pala Springs Aerial Tramway", New Vector3(-771.53, 5582.98, 33.01), LocationType.Entertainment, New Vector3(-755.66, 5583.63, 36.71), 91) With {.PedEnd = New Vector3(-745.23, 5594.77, 41.65)}
     Public LSGC As New Location("Los Santos Gun Club", New Vector3(16.86, -1125.85, 29.3), LocationType.Entertainment, New Vector3(20.24, -1107.24, 29.8), 173)
+    Public MazeBankArena As New Location("Maze Bank Arena", New Vector3(-235.91, -1863.7, 28.03), LocationType.Entertainment, New Vector3(-260.4, -1897.91, 27.76), 8)
 
     'THEATER
     Public LosSantosTheater As New Location("Los Santos Theater", New Vector3(345.33, -867.2, 28.72), LocationType.Theater, New Vector3(353.7, -874.09, 29.29), 8)
@@ -1271,6 +1284,10 @@ Public Module Places
     Public HotelVCRock2 As New Location("Von Crastenburg Hotel, Richman", New Vector3(-1228.485, -193.734, 38.8), LocationType.HotelLS, New Vector3(-1239.6, -156.26, 40.41), 62)
     Public HotelEmissary As New Location("Emissary Hotel", New Vector3(116.09, -935.88, 28.94), LocationType.HotelLS, New Vector3(106.31, -933.52, 29.79), 254)
     Public HotelAlesandro As New Location("Alesandro Hotel", New Vector3(318.07, -732.85, 28.73), LocationType.HotelLS, New Vector3(309.89, -728.62, 29.32), 251)
+    Public HotelVCLSIA As New Location("Von Crastenburg Hotel, LSIA", New Vector3(-887.55, -2187.61, 7.81), LocationType.HotelLS, New Vector3(-878.67, -2179.05, 9.81), 134)
+    Public HotelVCLSIA2 As New Location("Von Crastenburg Hotel, LSIA", New Vector3(-882.35, -2107.39, 8.14), LocationType.HotelLS, New Vector3(-878.67, -2179.05, 9.81), 134)
+    Public HotelOpium As New Location("Opium Nights Hotel, LSIA", New Vector3(-689.92, -2287.82, 12.87), LocationType.HotelLS, New Vector3(-702.13, -2276.6, 13.46), 229)
+    Public HotelOpium2 As New Location("Opium Nights Hotel, LSIA", New Vector3(-754.43, -2292.86, 12.14), LocationType.HotelLS, New Vector3(-737.53, -2277.44, 13.44), 133)
 
     'MOTEL
     Public PerreraBeach As New Location("Perrera Beach Motel", New Vector3(-1480.4, -669.76, 28.23), LocationType.MotelLS, New Vector3(-1478.68, -649.89, 29.58), 162) With {.PedEnd = New Vector3(-1479.64, -674.43, 29.04)}
@@ -1340,7 +1357,7 @@ Public Module Places
     Public DD3589 As New Location("3589 Didion Dr", New Vector3(-480.869, 552.292, 119.27), LocationType.Residential, New Vector3(-500.82, 552.7, 120.43), 297)
     Public DD3587 As New Location("3587 Didion Dr", New Vector3(-468.259, 547.306, 119.666), LocationType.Residential, New Vector3(-458.82, 537.47, 121.46), 352)
     Public DD3585 As New Location("3585 Didion Dr", New Vector3(-437.985, 545.711, 121.246), LocationType.Residential, New Vector3(-437.14, 540.93, 122.13), 352)
-    Public DD3583 As New Location("3583 Didion Dr", New Vector3(-379.833, 572.336, 119.711), LocationType.Residential, New Vector3(-386.4, 505.07, 120.41), 330)
+    Public DD3583 As New Location("3583 Didion Dr", New Vector3(-379.92, 512.65, 119.83), LocationType.Residential, New Vector3(-386.4, 505.07, 120.41), 330)
 
     Public MR6085 As New Location("6085 Milton Rd", New Vector3(-656.424, 909.115, 227.743), LocationType.Residential, New Vector3(-659.34, 888.76, 229.25), 13)
     Public MR4589 As New Location("4589 Milton Rd", New Vector3(-597.672, 863.667, 210.149), LocationType.Residential, New Vector3(-599, 852.85, 211.25), 6)
@@ -1357,7 +1374,7 @@ Public Module Places
     Public MR3842 As New Location("3842 Milton Rd", New Vector3(-483.19, 598.37, 126.51), LocationType.Residential, New Vector3(-475.24, 585.9, 128.68), 44)
 
     Public Alta601 As New Location("601 Alta St", New Vector3(148.56, 63.6, 78.25), LocationType.Residential, New Vector3(124.5, 64.8, 79.74), 249)
-    Public Alta602 As New Location("602 Alta St", New Vector3(138.26, 38.42, 71.89), LocationType.Residential, New Vector3(108.75, 54.78, 77.77), 282)
+    Public Alta602 As New Location("602 Alta St", New Vector3(138.26, 38.42, 71.89), LocationType.Residential, New Vector3(112.25, 56.62, 73.51), 257)
     Public Alta1144 As New Location("1144 Alta St", New Vector3(98.88, -85.93, 61.43), LocationType.Residential, New Vector3(64.09, -81.33, 66.7), 342)
     Public Alta1145 As New Location("1145 Alta St", New Vector3(93.45, -101.94, 58.46), LocationType.Residential, New Vector3(74.94, -107.3, 58.19), 313)
     Public VistaDelMarApts As New Location("Vista Del Mar Apartments", New Vector3(-1037.748, -1530.254, 4.529), LocationType.Residential, New Vector3(-1029.53, -1505.1, 4.9), 211)
@@ -1406,8 +1423,8 @@ End Module
 'DELETE BLIPS UPON REACHING THEM
 'PAY PLAYER
 'SHOW MISSION MARKER ARROW AT ORIGIN/DESTINATION
-'PED WALKS TO/FROM CAR INSTEAD OF RUNNING
 'PED PAUSES AT ARRIVAL POINT BEFORE BECOMING NOLONGERNEEDED
+'PED WALKS TO/FROM CAR INSTEAD OF RUNNING
 'IMPLEMENT TIP PAY
 '   based on speed, driving style & vehicle condition
 'EVALUATE:
