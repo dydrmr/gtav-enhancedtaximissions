@@ -60,6 +60,8 @@ Public Class EnhancedTaxiMissions
     Public UItext_White As Color = Color.White
     Public UItext_Dark As Color = Color.FromArgb(180, 80, 80, 80)
 
+    Public UI_Debug As New UIContainer(New Point(40, 140), New Size(190, 60), Color.FromArgb(0, 0, 0, 0))
+
     Public updateDist1 As Boolean = False
     Public updateDist2 As Boolean = False
 
@@ -157,12 +159,11 @@ Public Class EnhancedTaxiMissions
 
 
         UI.Items.Add(New UIRectangle(New Point(0, 0), New Size(190, 25), UIcolor_Header))
-        UI.Items.Add(New UIText("Limousine Driver" & " (" & MiniGameStage & ")    " & IngameHour.ToString("D2") & ":" & IngameMinute.ToString("D2"), New Point(3, 1), 0.5, UItext_White, 1, False))
-
+        UI.Items.Add(New UIText("Limousine Driver", New Point(3, 1), 0.5, UItext_White, 1, False))
+        UI.Items.Add(New UIText(IngameHour.ToString("D2") & ":" & IngameMinute.ToString("D2"), New Point(156, 0), 0.5, UItext_White, 4, False))
 
         UI.Items.Add(New UIRectangle(New Point(0, 27), New Size(190, 20), UIcolor_Status))
         UI.Items.Add(New UIText(UI_DispatchStatus, New Point(3, 28), 0.35F, UItext_White, 4, False))
-
 
 
         UI.Items.Add(New UIRectangle(New Point(0, 47), New Size(190, 40), UIcolor_BG))
@@ -180,14 +181,28 @@ Public Class EnhancedTaxiMissions
         End If
 
         UI.Draw()
+
+
+
+
+        UI_Debug.Items.Clear()
+
+        UI_Debug.Items.Add(New UIRectangle(New Point(0, 0), New Size(190, 40), UIcolor_BG))
+        UI_Debug.Items.Add(New UIText("DEBUG INFORMATION", New Point(3, 0), 0.25, UItext_White, 0, False))
+        UI_Debug.Items.Add(New UIText("Game Stage: " & MiniGameStage.ToString, New Point(3, 15), 0.25, UItext_White, 0, False))
+
+        UI_Debug.Draw()
+
     End Sub
 
 
     Public Sub checkIfMinigameIsActive()
         If isMinigameActive = True Then
             UI.Enabled = True
+            UI_Debug.Enabled = True
         Else
             UI.Enabled = False
+            UI_Debug.Enabled = False
         End If
     End Sub
 
@@ -261,7 +276,7 @@ Public Class EnhancedTaxiMissions
                 If isCustomerPedSpawned = False Then
                     isCustomerPedSpawned = True
 
-                    GTA.Native.Function.Call(Native.Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 15)
+                    GTA.Native.Function.Call(Native.Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 30)
 
                     If Customer.isCeleb = True Then
                         CustomerPed = World.CreatePed(New GTA.Model(Customer.Model), Origin.PedStart, Origin.PedStartHDG)
@@ -284,7 +299,6 @@ Public Class EnhancedTaxiMissions
 
                     'TO-DO
                     'CREATE MISSION MARKER (LIKE THE ACTUAL TAXI MISSIONS)
-                    'PRINT("Ped spawned & area cleared")
                 End If
             End If
         End If
@@ -326,7 +340,6 @@ Public Class EnhancedTaxiMissions
             Dim distance As Single = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, ppos.X, ppos.Y, ppos.Z, opos.X, opos.Y, opos.Z, 1)
 
             If distance < 9 Then
-                'PRINT("Arrived at Origin")
                 PlayerHasArrivedAtOrigin()
             End If
         End If
@@ -336,7 +349,6 @@ Public Class EnhancedTaxiMissions
         If MiniGameStage = MiniGameStages.StoppingAtOrigin Then
             If Game.Player.Character.IsInVehicle = True Then
                 If Game.Player.Character.CurrentVehicle.Speed = 0 Then
-                    'PRINT("Stopped at Origin")
                     PlayerHasStoppedAtOrigin()
                 End If
             End If
@@ -384,7 +396,6 @@ Public Class EnhancedTaxiMissions
                 Dim distance As Single = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, tgt.X, tgt.Y, tgt.Z, ppo.X, ppo.Y, ppo.Z, 1)
 
                 If distance < 8 Then
-                    'PRINT("Ped has reached car")
                     PedHasReachedCar()
                 End If
             End If
@@ -414,7 +425,6 @@ Public Class EnhancedTaxiMissions
 
                     Dim areAllPedsSitting As Boolean = isPed1Sitting And isPed2Sitting And isPed3Sitting
                     If areAllPedsSitting = True Then
-                        'PRINT("Ped has taken a seat")
                         PedHasEnteredCar()
                     End If
                 End If
@@ -432,7 +442,6 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub checkIfCloseEnoughToClearDestination()
-        System.Diagnostics.Debug.Print("Made it to point 1")
         If MiniGameStage = MiniGameStages.DrivingToDestination Then
             Dim ppos As Vector3 = Game.Player.Character.Position
             Dim dpos As Vector3 = Destination.Coords
@@ -443,13 +452,11 @@ Public Class EnhancedTaxiMissions
                 If isDestinationCleared = False Then
                     isDestinationCleared = True
 
-                    'GTA.Native.Function.Call(Native.Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 15)
-                    'PRINT("Destination Cleared")
+                    GTA.Native.Function.Call(Native.Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 30)
                 End If
             End If
 
         End If
-        System.Diagnostics.Debug.Print("Made it to point 2")
     End Sub
 
     Public Sub checkIfPlayerHasArrivedAtDestination()
@@ -491,7 +498,6 @@ Public Class EnhancedTaxiMissions
         If k.KeyCode = Keys.L Then
 
             If isMinigameActive = True Then
-                'PRINT("Limo missions ended.")
                 EndMinigame()
                 isMinigameActive = False
             Else
@@ -503,7 +509,6 @@ Public Class EnhancedTaxiMissions
                         Dim veh As String = Game.Player.Character.CurrentVehicle.DisplayName
 
                         If veh = "TAXI" Or veh = "STRETCH" Or veh = "SCHAFTER" Or veh = "SUPERD" Or veh = "ORACLE" Or veh = "WASHINGT" Then
-                            'PRINT("Limo missions started.")
                             StartMinigame()
                             isMinigameActive = True
                         Else
@@ -993,7 +998,6 @@ Public Class EnhancedTaxiMissions
         DestinationBlip.Color = BlipColor.Blue
 
         GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.Handle, 1)
-        'PRINT("DestinationBlip: " & DestinationBlip)
 
         UI_DispatchStatus = "Please drive the customer to the destination"
         If isThereASecondCustomer = True Then
@@ -1319,6 +1323,10 @@ Public Module Places
     Public NRD1015 As New Location("1015 North Rockford Dr", New Vector3(-1941.942, 554.111, 114.35), LocationType.Residential, New Vector3(-1937.57, 551.05, 115.02), 69)
     Public NRD1017 As New Location("1017 North Rockford Dr", New Vector3(-1953.778, 589.897, 118.277), LocationType.Residential, New Vector3(-1928.958, 595.436, 122.28), 65)
     Public NRD1019 As New Location("1019 North Rockford Dr", New Vector3(-1898.356, 619.346, 127.93), LocationType.Residential, New Vector3(-1896.82, 642.375, 130.21), 180)
+    Public NRD1022 As New Location("1022 North Rockford Dr", New Vector3(-1859.05, 334.48, 87.88), LocationType.Residential, New Vector3(-1841.58, 313.81, 90.92), 13)
+    Public NRD1024 As New Location("1024 North Rockford Dr", New Vector3(-1814.82, 346.16, 87.91), LocationType.Residential, New Vector3(-1808.41, 333.8, 89.37), 33)
+    Public NRD1026 As New Location("1026 North Rockford Dr", New Vector3(-1738.51, 388.53, 88.17), LocationType.Residential, New Vector3(-1733.3, 379.93, 89.73), 30)
+    Public NRD1028 As New Location("1028 North Rockford Dr", New Vector3(-1674.76, 398.75, 88.28), LocationType.Residential, New Vector3(-1673.37, 386.67, 89.35), 349)
     Public AW1 As New Location("1 Americano Way", New Vector3(-1466.627, 40.889, 53.436), LocationType.Residential, New Vector3(-1467.26, 35.88, 54.54), 351)
     Public AW2 As New Location("2 Americano Way", New Vector3(-1515.466, 30.088, 55.67), LocationType.Residential, New Vector3(-1515.17, 25.24, 56.82), 353)
     Public AW3 As New Location("3 Americano Way", New Vector3(-1568.744, 32.989, 58.65), LocationType.Residential, New Vector3(-1570.5, 23.53, 59.55), 352)
@@ -1372,6 +1380,24 @@ Public Module Places
     Public MR3543 As New Location("3543 Milton Rd", New Vector3(-545.46, 490.96, 103.51), LocationType.Residential, New Vector3(-538.21, 477.76, 103.18), 22)
     Public MR3548 As New Location("3548 Milton Rd", New Vector3(-522.28, 396.8, 93.29), LocationType.Residential, New Vector3(-502.37, 399.91, 97.41), 62)
     Public MR3842 As New Location("3842 Milton Rd", New Vector3(-483.19, 598.37, 126.51), LocationType.Residential, New Vector3(-475.24, 585.9, 128.68), 44)
+    Public AJD2103 As New Location("2103 Ace Jones Dr", New Vector3(-1531.82, 438.83, 107.83), LocationType.Residential, New Vector3(-1540.07, 421.57, 110.01), 5)
+    Public AJD2105 As New Location("2105 Ace Jones Dr", New Vector3(-1513.27, 433.71, 109.95), LocationType.Residential, New Vector3(-1495.75, 437.85, 112.5), 68)
+    Public AJD2107 As New Location("2107 Ace Jones Dr", New Vector3(-1473.67, 518.31, 117.19), LocationType.Residential, New Vector3(-1454.26, 512.88, 117.63), 102)
+    Public NSA1102 As New Location("1102 North Sheldon Ave", New Vector3(-1493.39, 511.81, 116.73), LocationType.Residential, New Vector3(-1499.76, 522.91, 118.27), 209)
+    Public NSA1105 As New Location("1105 North Sheldon Ave", New Vector3(-1358.67, 611.61, 133.36), LocationType.Residential, New Vector3(-1366.6, 611.25, 133.92), 272)
+    Public NSA2106 As New Location("2106 North Sheldon Ave", New Vector3(-1354.85, 608.47, 133.3), LocationType.Residential, New Vector3(-1338.54, 605.89, 134.38), 89)
+    Public NSA1103 As New Location("1103 North Sheldon Ave", New Vector3(-1353.4, 576.59, 130.56), LocationType.Residential, New Vector3(-1365.62, 567.2, 134.97), 288)
+    Public NSA2108 As New Location("2108 North Sheldon Ave", New Vector3(-1363.52, 556.62, 127.66), LocationType.Residential, New Vector3(-1346.59, 560.57, 130.53), 51)
+    Public NSA1101 As New Location("1101 North Sheldon Ave", New Vector3(-1412.23, 556.19, 123.1), LocationType.Residential, New Vector3(-1404.22, 561.31, 125.41), 162)
+    Public NSA1107 As New Location("1107 North Sheldon Ave", New Vector3(-1292.56, 631.21, 137.32), LocationType.Residential, New Vector3(-1278.97, 628.8, 142.31), 126)
+    Public NSA1109 As New Location("1109 North Sheldon Ave", New Vector3(-1237.13, 655.33, 141.49), LocationType.Residential, New Vector3(-1247.92, 643.67, 142.62), 305)
+    Public NSA1111 As New Location("1111 North Sheldon Ave", New Vector3(-1225.09, 665.88, 142.96), LocationType.Residential, New Vector3(-1218.73, 666.08, 144.53), 85)
+    Public NSA1113 As New Location("1113 North Sheldon Ave", New Vector3(-1202.93, 691.86, 146.28), LocationType.Residential, New Vector3(-1197.29, 693.49, 147.42), 88)
+    Public NSA1115 As New Location("1115 North Sheldon Ave", New Vector3(-1163.07, 747.48, 153.66), LocationType.Residential, New Vector3(-1165.25, 728.7, 155.61), 53)
+    Public NSA1117 As New Location("1117 North Sheldon Ave", New Vector3(-148.39, 775.59, 161.44), LocationType.Residential, New Vector3(-1118.37, 762.3, 164.29), 35)
+    Public NSA1112 As New Location("1112 North Sheldon Ave", New Vector3(-1040.12, 792.68, 166.92), LocationType.Residential, New Vector3(-1051.57, 794.85, 167.01), 207)
+    Public NSA1110 As New Location("1110 North Sheldon Ave", New Vector3(-1095.98, 786.03, 163.44), LocationType.Residential, New Vector3(-1100.32, 796.2, 166.99), 200)
+    Public NSA1108 As New Location("1108 North Sheldon Ave", New Vector3(-1118.1, 781.31, 166.62), LocationType.Residential, New Vector3(-1129.95, 783.95, 163.89), 261)
 
     Public Alta601 As New Location("601 Alta St", New Vector3(148.56, 63.6, 78.25), LocationType.Residential, New Vector3(124.5, 64.8, 79.74), 249)
     Public Alta602 As New Location("602 Alta St", New Vector3(138.26, 38.42, 71.89), LocationType.Residential, New Vector3(112.25, 56.62, 73.51), 257)
