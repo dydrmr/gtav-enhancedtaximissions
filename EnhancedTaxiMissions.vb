@@ -20,6 +20,10 @@ Public Class EnhancedTaxiMissions
     Public isMinigameActive As Boolean = False
     Public MiniGameStage As MiniGameStages = MiniGameStages.Standby
 
+    Public ScriptStartTime As Integer = 0
+    Public areSettingsLoaded As Boolean = False
+
+
     Public isSpecialMission As Boolean = False
 
     Public Origin, Destination As Location
@@ -121,10 +125,20 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub LoadSettings(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
-        If ShowDebugInfo = False Then Exit Sub
+        'If ShowDebugInfo = False Then Exit Sub
 
         If k.KeyCode = Keys.Divide Then
+
+            GTA.UI.Notify("Enhanced Taxi Missions - Reloading Settings...")
+
             GetSettings()
+
+            Dim v1 As String = Settings.GetValue("SETTINGS", "TOGGLE")
+            Dim v2 As String = Settings.GetValue("SETTINGS", "UNITS")
+
+            GTA.UI.Notify("Enhanced Taxi Missions - Toggle key setting extracted from ini file: " & v1)
+            GTA.UI.Notify("Enhanced Taxi Missions - Units setting extracted from ini file: " & v2)
+
         End If
     End Sub
 
@@ -137,12 +151,15 @@ Public Class EnhancedTaxiMissions
 
         ListOfPeople.Remove(NonCeleb)
 
+        ScriptStartTime = Game.GameTime
         'GetSettings()
 
         initPlaceLists()
     End Sub
 
     Public Sub Update(ByVal sender As Object, ByVal e As EventArgs) Handles MyBase.Tick
+
+        checkIfItsTimeToLoadSettings()
 
         checkIfMinigameIsActive()
 
@@ -268,6 +285,8 @@ Public Class EnhancedTaxiMissions
             Case Else
                 ToggleKey = Keys.L
         End Select
+
+
         PRINT("Toggle Key is " & ToggleKey.ToString)
 
         value = Settings.GetValue("SETTINGS", "UNITS")
@@ -284,6 +303,14 @@ Public Class EnhancedTaxiMissions
         PRINT("Units in KM? " & UnitsInKM.ToString)
     End Sub
 
+    Public Sub checkIfItsTimeToLoadSettings()
+        If areSettingsLoaded = False Then
+            If Game.GameTime - ScriptStartTime > 1000 Then
+                areSettingsLoaded = True
+                GetSettings()
+            End If
+        End If
+    End Sub
 
 
     Public Sub refreshUI()
