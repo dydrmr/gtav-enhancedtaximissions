@@ -63,10 +63,10 @@ Namespace My
      Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute()>  _
     Friend Module MySettingsProperty
         
-        <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")>  _
-        Friend ReadOnly Property Settings() As Global.Limo.My.MySettings
+        <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")> _
+        Friend ReadOnly Property Settings() As Global.EnhancedTaxiMissions.My.MySettings
             Get
-                Return Global.Limo.My.MySettings.Default
+                Return Global.EnhancedTaxiMissions.My.MySettings.Default
             End Get
         End Property
     End Module

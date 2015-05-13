@@ -9,8 +9,8 @@
     </SchemaVersion>
     <ProjectGuid>{162DC9E7-9F82-4913-98B0-AF635E09A3C2}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Limo</RootNamespace>
-    <AssemblyName>Limo</AssemblyName>
+    <RootNamespace>EnhancedTaxiMissions</RootNamespace>
+    <AssemblyName>EnhancedTaxiMissions</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Windows</MyType>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -22,7 +22,7 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Debug\</OutputPath>
-    <DocumentationFile>Limo.xml</DocumentationFile>
+    <DocumentationFile>EnhancedTaxiMissions.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
@@ -32,7 +32,7 @@
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>Limo.xml</DocumentationFile>
+    <DocumentationFile>EnhancedTaxiMissions.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
