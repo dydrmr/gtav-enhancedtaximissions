@@ -13,6 +13,10 @@ Public Class EnhancedTaxiMissions
     Inherits Script
     Public RND As New Random
 
+    Public ShowDebugInfo As Boolean = False
+    Public ToggleKey As Keys = Keys.L
+    Public UnitsInKM As Boolean = False
+
     Public isMinigameActive As Boolean = False
     Public MiniGameStage As MiniGameStages = MiniGameStages.Standby
 
@@ -26,6 +30,11 @@ Public Class EnhancedTaxiMissions
 
     Public Customer As Person
     Public CustomerPed As Ped
+
+    Public MissionStartTime As Integer
+    Public OriginArrivalTime As Integer
+    Public PickupTime As Integer
+    Public DestinationArrivalTime As Integer
 
     Public isThereASecondCustomer As Boolean = False
     Public isThereAThirdCustomer As Boolean = False
@@ -58,7 +67,7 @@ Public Class EnhancedTaxiMissions
     Public UIcolor_Status As Color = Color.FromArgb(140, 110, 190, 240)
     Public UIcolor_BG As Color = Color.FromArgb(140, 0, 0, 0)
     Public UItext_White As Color = Color.White
-    Public UItext_Dark As Color = Color.FromArgb(180, 80, 80, 80)
+    Public UItext_Dark As Color = Color.FromArgb(250, 100, 100, 100)
 
     Public UI_Debug As New UIContainer(New Point(40, 140), New Size(190, 60), Color.FromArgb(0, 0, 0, 0))
 
@@ -80,13 +89,17 @@ Public Class EnhancedTaxiMissions
     End Enum
 
     Public Sub PRINT(msg As String)
-        GTA.UI.Notify(GTA.World.CurrentDayTime.Hours.ToString("D2") & ":" & GTA.World.CurrentDayTime.Minutes.ToString("D2") & ": " & msg)
+        If ShowDebugInfo = True Then
+            GTA.UI.Notify(GTA.World.CurrentDayTime.Hours.ToString("D2") & ":" & GTA.World.CurrentDayTime.Minutes.ToString("D2") & ": " & msg)
+        End If
     End Sub
 
     Public Sub SavePosition(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
 
         'Temporary subroutine that aims to save the players current XYZ coords and heading to an ini file, to speed up the process of entering coordinates for new locations.
         'Haven't quite figured out how to save to an ini file yet.
+
+        If ShowDebugInfo = False Then Exit Sub
 
         If k.KeyCode = Keys.Multiply Then
 
@@ -107,13 +120,11 @@ Public Class EnhancedTaxiMissions
         End If
     End Sub
 
-    Public Sub SpawnObject(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
+    Public Sub LoadSettings(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
+        If ShowDebugInfo = False Then Exit Sub
+
         If k.KeyCode = Keys.Divide Then
-            PRINT("Starting...")
-            Dim mdl As Model = New GTA.Model(1828647717)
-            Dim pos As Vector3 = Game.Player.Character.Position + Game.Player.Character.ForwardVector * 3 + New Vector3(0, 0, 0.5)
-            Dim obj As Prop = World.CreateProp(mdl, pos, False, False)
-            PRINT("Done.")
+            GetSettings()
         End If
     End Sub
 
@@ -125,6 +136,8 @@ Public Class EnhancedTaxiMissions
         'GTA.Native.Function.Call(Native.Hash.SET_VEHICLE_POPULATION_BUDGET, 700)
 
         ListOfPeople.Remove(NonCeleb)
+
+        'GetSettings()
 
         initPlaceLists()
     End Sub
@@ -151,6 +164,125 @@ Public Class EnhancedTaxiMissions
 
     End Sub
 
+    Public Sub GetSettings()
+        Dim value As String = ""
+        value = Settings.GetValue("SETTINGS", "TOGGLE")
+        PRINT("Toggle Key value: -" & value & "-")
+        Select Case value
+            Case "A"
+                ToggleKey = Keys.A
+            Case "B"
+                ToggleKey = Keys.B
+            Case "C"
+                ToggleKey = Keys.C
+            Case "D"
+                ToggleKey = Keys.D
+            Case "E"
+                ToggleKey = Keys.E
+            Case "F"
+                ToggleKey = Keys.F
+            Case "G"
+                ToggleKey = Keys.G
+            Case "H"
+                ToggleKey = Keys.H
+            Case "I"
+                ToggleKey = Keys.I
+            Case "J"
+                ToggleKey = Keys.J
+            Case "K"
+                ToggleKey = Keys.K
+            Case "L"
+                ToggleKey = Keys.L
+            Case "M"
+                ToggleKey = Keys.M
+            Case "N"
+                ToggleKey = Keys.N
+            Case "O"
+                ToggleKey = Keys.O
+            Case "P"
+                ToggleKey = Keys.P
+            Case "Q"
+                ToggleKey = Keys.Q
+            Case "R"
+                ToggleKey = Keys.R
+            Case "S"
+                ToggleKey = Keys.S
+            Case "T"
+                ToggleKey = Keys.T
+            Case "U"
+                ToggleKey = Keys.U
+            Case "V"
+                ToggleKey = Keys.V
+            Case "W"
+                ToggleKey = Keys.W
+            Case "X"
+                ToggleKey = Keys.X
+            Case "Y"
+                ToggleKey = Keys.Y
+            Case "Z"
+                ToggleKey = Keys.Z
+            Case "F1"
+                ToggleKey = Keys.F1
+            Case "F2"
+                ToggleKey = Keys.F2
+            Case "F3"
+                ToggleKey = Keys.F3
+            Case "F4"
+                ToggleKey = Keys.F4
+            Case "F5"
+                ToggleKey = Keys.F5
+            Case "F6"
+                ToggleKey = Keys.F6
+            Case "F7"
+                ToggleKey = Keys.F7
+            Case "F8"
+                ToggleKey = Keys.F8
+            Case "F9"
+                ToggleKey = Keys.F9
+            Case "F10"
+                ToggleKey = Keys.F10
+            Case "F11"
+                ToggleKey = Keys.F11
+            Case "F12"
+                ToggleKey = Keys.F12
+            Case "1"
+                ToggleKey = Keys.D1
+            Case "2"
+                ToggleKey = Keys.D2
+            Case "3"
+                ToggleKey = Keys.D3
+            Case "4"
+                ToggleKey = Keys.D4
+            Case "5"
+                ToggleKey = Keys.D5
+            Case "6"
+                ToggleKey = Keys.D6
+            Case "7"
+                ToggleKey = Keys.D7
+            Case "8"
+                ToggleKey = Keys.D8
+            Case "9"
+                ToggleKey = Keys.D9
+            Case "0"
+                ToggleKey = Keys.D0
+            Case Else
+                ToggleKey = Keys.L
+        End Select
+        PRINT("Toggle Key is " & ToggleKey.ToString)
+
+        value = Settings.GetValue("SETTINGS", "UNITS")
+        PRINT("value: -" & value & "-")
+        Select Case value
+            Case "KM"
+                UnitsInKM = True
+            Case "MI"
+                UnitsInKM = False
+            Case Else
+                UnitsInKM = True
+        End Select
+
+        PRINT("Units in KM? " & UnitsInKM.ToString)
+    End Sub
 
 
 
@@ -184,15 +316,20 @@ Public Class EnhancedTaxiMissions
 
 
 
+        If ShowDebugInfo = True Then
+            UI_Debug.Items.Clear()
 
-        UI_Debug.Items.Clear()
+            UI_Debug.Items.Add(New UIRectangle(New Point(0, 0), New Size(190, 80), UIcolor_BG))
+            UI_Debug.Items.Add(New UIText("DEBUG INFORMATION", New Point(3, 0), 0.25, UItext_White, 0, False))
+            UI_Debug.Items.Add(New UIText("Game Stage: " & MiniGameStage.ToString, New Point(3, 15), 0.25, UItext_White, 0, False))
+            UI_Debug.Items.Add(New UIText("Date: " & World.CurrentDayTime.TotalDays, New Point(3, 30), 0.25, UItext_White, 0, False))
+            Dim x As Single = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_GAME_TIMER)
+            UI_Debug.Items.Add(New UIText("Game Timer: " & x, New Point(3, 45), 0.25, UItext_White, 0, False))
+            UI_Debug.Items.Add(New UIText("Game Time: " & Game.GameTime, New Point(3, 60), 0.25, UItext_White, 0, False))
 
-        UI_Debug.Items.Add(New UIRectangle(New Point(0, 0), New Size(190, 40), UIcolor_BG))
-        UI_Debug.Items.Add(New UIText("DEBUG INFORMATION", New Point(3, 0), 0.25, UItext_White, 0, False))
-        UI_Debug.Items.Add(New UIText("Game Stage: " & MiniGameStage.ToString, New Point(3, 15), 0.25, UItext_White, 0, False))
 
-        UI_Debug.Draw()
-
+            UI_Debug.Draw()
+        End If
     End Sub
 
 
@@ -218,9 +355,17 @@ Public Class EnhancedTaxiMissions
 
                 dist = GTA.Native.Function.Call(Of Single)(Native.Hash.CALCULATE_TRAVEL_DISTANCE_BETWEEN_POINTS, ppos.X, ppos.Y, ppos.Z, opos.X, opos.Y, opos.Z)
                 If dist < 500 Then
-                    UI_Dist1 = "  (" & dist & " m)"
+                    If UnitsInKM = True Then
+                        UI_Dist1 = "  (" & dist & " m)"
+                    Else
+                        UI_Dist1 = "  (" & Math.Round(dist * 3.28084) & " ft)"
+                    End If
                 Else
-                    UI_Dist1 = "  (" & Math.Round(dist / 1000, 2) & " km)"
+                    If UnitsInKM = True Then
+                        UI_Dist1 = "  (" & Math.Round(dist / 1000, 2) & " km)"
+                    Else
+                        UI_Dist1 = "  (" & Math.Round((dist / 1000) * 0.621371, 2) & " mi)"
+                    End If
                 End If
             Else
                 UI_Dist1 = ""
@@ -235,10 +380,18 @@ Public Class EnhancedTaxiMissions
 
                 dist = GTA.Native.Function.Call(Of Single)(Native.Hash.CALCULATE_TRAVEL_DISTANCE_BETWEEN_POINTS, ppos.X, ppos.Y, ppos.Z, dpos.X, dpos.Y, dpos.Z)
 
-                If dist < 400 Then
-                    UI_Dist2 = "  (" & dist & " m)"
+                If dist < 500 Then
+                    If UnitsInKM = True Then
+                        UI_Dist2 = "  (" & dist & " m)"
+                    Else
+                        UI_Dist2 = "  (" & Math.Round(dist * 3.28084) & " ft)"
+                    End If
                 Else
-                    UI_Dist2 = "  (" & Math.Round(dist / 1000, 2) & " km)"
+                    If UnitsInKM = True Then
+                        UI_Dist2 = "  (" & Math.Round(dist / 1000, 2) & " km)"
+                    Else
+                        UI_Dist2 = "  (" & Math.Round((dist / 1000) * 0.621371, 2) & " mi)"
+                    End If
                 End If
             Else
                 UI_Dist2 = ""
@@ -247,6 +400,9 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub updateRoutes()
+
+        Exit Sub
+
         If IngameMinute Mod 5 = 0 Then
             If MiniGameStage = MiniGameStages.DrivingToOrigin Then
                 GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 0)
@@ -495,7 +651,7 @@ Public Class EnhancedTaxiMissions
 
         If Game.Player.IsOnMission = True Then Exit Sub
 
-        If k.KeyCode = Keys.L Then
+        If k.KeyCode = ToggleKey Then
 
             If isMinigameActive = True Then
                 EndMinigame()
@@ -542,6 +698,11 @@ Public Class EnhancedTaxiMissions
         isThereASecondCustomer = False
         isThereAThirdCustomer = False
 
+        MissionStartTime = 0
+        OriginArrivalTime = 0
+        DestinationArrivalTime = 0
+        PickupTime = 0
+
         NearestLocationDistance = 100000
 
         FareTotal = 0
@@ -562,12 +723,14 @@ Public Class EnhancedTaxiMissions
         If OriginBlip IsNot Nothing Then
             If OriginBlip.Exists Then
                 GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, OriginBlip.Handle, 0)
+                OriginBlip.Remove()
             End If
         End If
 
         If DestinationBlip IsNot Nothing Then
             If DestinationBlip.Exists Then
                 GTA.Native.Function.Call(Native.Hash.SET_BLIP_ROUTE, DestinationBlip.Handle, 0)
+                DestinationBlip.Remove()
             End If
         End If
 
@@ -623,7 +786,7 @@ Public Class EnhancedTaxiMissions
         Dim ePos As Vector3 = EndPoint
         FareDistance = GTA.Native.Function.Call(Of Single)(Native.Hash.CALCULATE_TRAVEL_DISTANCE_BETWEEN_POINTS, sPos.X, sPos.Y, sPos.Z, ePos.X, ePos.Y, ePos.Z) / 1000
         If FareDistance > 20 Then
-            FareDistance = World.GetDistance(StartPoint, EndPoint)
+            FareDistance = World.GetDistance(StartPoint, EndPoint) / 1000
         End If
         FareDistance *= 0.621371
         FareTotal = CInt(Math.Round(FareBase + (FareDistance * FarePerMile)))
@@ -637,6 +800,9 @@ Public Class EnhancedTaxiMissions
 
     Private Sub StartMission()
 
+        MissionStartTime = Game.GameTime
+        PRINT("Mission start: " & MissionStartTime)
+
         Dim r As Integer = RND.Next(0, 10)
         If r < 1 Then
             isSpecialMission = True
@@ -647,7 +813,17 @@ Public Class EnhancedTaxiMissions
         End If
 
         SelectValidOrigin(PotentialOrigins)
-        SelectValidDestination(PotentialDestinations)
+
+        If Origin.Type = LocationType.AirportArrive Then
+            Dim l As New List(Of Location)
+            l.AddRange(lResidential)
+            l.AddRange(lHotelLS)
+            l.AddRange(lMotelLS)
+            l.AddRange(lOffice)
+            SelectValidDestination(l)
+        Else
+            SelectValidDestination(PotentialDestinations)
+        End If
 
         If isSpecialMission = True Then
             SelectSpecialCustomers()
@@ -814,25 +990,29 @@ Public Class EnhancedTaxiMissions
 
     Private Sub SelectValidOrigin(Places As List(Of Location))
 
-        PRINT("Valid Origins: " & Places.Count)
         If Places.Count = 0 Then Places.AddRange(ListOfPlaces)
 
         Dim NearestLocation As Location
         For Each l As Location In Places
             Dim ppos As Vector3 = Game.Player.Character.Position
             Dim dist As Single
-            dist = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, l.Coords.X, l.Coords.Y, l.Coords.Z, ppos.X, ppos.Y, ppos.Z, 1)
+            dist = World.GetDistance(l.Coords, ppos)
             If dist < NearestLocationDistance Then
                 NearestLocation = l
                 NearestLocationDistance = dist
             End If
         Next
 
+
+
+
         If NearestLocationDistance > 1000 Then
             NearestLocationDistance += 30%
         Else
             NearestLocationDistance = 1000
         End If
+
+
 
         Dim r As Integer
         Dim distance As Single
@@ -841,14 +1021,15 @@ Public Class EnhancedTaxiMissions
             r = RND.Next(0, Places.Count)
             Origin = Places(r)
             Dim ppos As Vector3 = Game.Player.Character.Position
-            distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, ppos.X, ppos.Y, ppos.Z, 1)
+            distance = World.GetDistance(Origin.Coords, ppos)
             c += 1
+            Wait(1)
             If c > 10 Then
                 r = RND.Next(0, ListOfPlaces.Count)
                 Origin = ListOfPlaces(r)
-                distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, ppos.X, ppos.Y, ppos.Z, 1)
+                distance = World.GetDistance(Origin.Coords, ppos)
             End If
-        Loop While distance > NearestLocationDistance   'Or distance < 50
+        Loop While distance > NearestLocationDistance Or distance < 50
 
         UI_Origin = Origin.Name
     End Sub
@@ -863,12 +1044,14 @@ Public Class EnhancedTaxiMissions
         Do
             r = RND.Next(0, Places.Count)
             Destination = Places(r)
-            distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, Destination.Coords.X, Destination.Coords.Y, Destination.Coords.Z, 1)
+            distance = World.GetDistance(Origin.Coords, Destination.Coords)
             c += 1
+            Wait(1)
             If c > 10 Then
                 r = RND.Next(0, ListOfPlaces.Count)
                 Destination = ListOfPlaces(r)
-                distance = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, Origin.Coords.X, Origin.Coords.Y, Origin.Coords.Z, Destination.Coords.X, Destination.Coords.Y, Destination.Coords.Z, 1)
+                distance = World.GetDistance(Origin.Coords, Destination.Coords)
+                Exit Do
             End If
         Loop While Origin.Name = Destination.Name Or distance < 500 Or Origin.isValidDestination = False
 
@@ -892,7 +1075,6 @@ Public Class EnhancedTaxiMissions
             Dim t As Integer = RND.Next(0, 2)
             If t = 0 Then
                 isThereAThirdCustomer = True
-                GTA.UI.ShowSubtitle("3 PAX", 5000)
             End If
         End If
 
@@ -918,7 +1100,8 @@ Public Class EnhancedTaxiMissions
     Private Sub PlayerHasArrivedAtOrigin()
         updateDist1 = False
         updateDist2 = True
-
+        OriginArrivalTime = Game.GameTime
+        PRINT("Orig Arr Time: " & OriginArrivalTime & " / Time taken: " & Math.Round((OriginArrivalTime - MissionStartTime) / 1000, 1))
         MiniGameStage = MiniGameStages.StoppingAtOrigin
     End Sub
 
@@ -953,7 +1136,7 @@ Public Class EnhancedTaxiMissions
 
         'TO-DO
         'REMOVE GPS ROUTE TO ORIGIN BLIP
-        'OriginBlip.Remove
+        OriginBlip.Remove()
         'REMOVE MISSION MARKER
         'PRINT("Origin Blip Removed")
 
@@ -993,6 +1176,8 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Private Sub PedHasEnteredCar()
+        PickupTime = Game.GameTime
+        PRINT("Pickup Time: " & PickupTime)
 
         DestinationBlip = World.CreateBlip(Destination.Coords)
         DestinationBlip.Color = BlipColor.Blue
@@ -1008,6 +1193,8 @@ Public Class EnhancedTaxiMissions
 
     Private Sub PlayerHasArrivedAtDestination()
         updateDist2 = False
+        DestinationArrivalTime = Game.GameTime
+        PRINT("Dest Arr Time: " & DestinationArrivalTime & " / Time taken: " & Math.Round((DestinationArrivalTime - PickupTime) / 1000, 1))
         MiniGameStage = MiniGameStages.StoppingAtDestination
     End Sub
 
@@ -1017,19 +1204,13 @@ Public Class EnhancedTaxiMissions
 
         'TO-DO
         'REMOVE GPS ROUTE TO DESTINATION BLIP
-        'DestinationBlip.Remove
+        DestinationBlip.Remove()
         'PRINT("Destination Blip Removed")
 
-        CustomerPed.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+        Dim LeaveSequence As New TaskSequence
 
-        If isThereASecondCustomer = True Then
-            Customer2Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-        End If
-        If isThereAThirdCustomer = True Then
-            Customer3Ped.Task.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-        End If
-
-        Wait(100)
+        LeaveSequence.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+        LeaveSequence.AddTask.Wait(300)
 
         Dim isDestinationSet As Boolean
         If Destination.PedEnd.X = 0 And Destination.PedEnd.Y = 0 And Destination.PedEnd.Z = 0 Then
@@ -1038,7 +1219,6 @@ Public Class EnhancedTaxiMissions
             isDestinationSet = True
         End If
 
-        Dim LeaveSequence As New TaskSequence
 
         If isDestinationSet = False Then
             'LeaveSequence.AddTask.FollowPointRoute(Destination.PedStart)
@@ -1047,7 +1227,7 @@ Public Class EnhancedTaxiMissions
             'LeaveSequence.AddTask.FollowPointRoute(Destination.PedEnd)
             LeaveSequence.AddTask.GoTo(Destination.PedEnd, False)
         End If
-        LeaveSequence.AddTask.Wait(20000)
+        LeaveSequence.AddTask.Wait(25000)
         CustomerPed.Task.PerformSequence(LeaveSequence)
         CustomerPed.MarkAsNoLongerNeeded()
 
@@ -1209,6 +1389,10 @@ Public Module Places
     Public DeckerPark As New Location("Decker Park", New Vector3(-864.56, -679.59, 27), LocationType.Sport, New Vector3(-893.83, -707.27, 19.82), 340)
     Public PBCC As New Location("Pacific Bluffs Country Club", New Vector3(-3016.76, 85.64, 11.2), LocationType.Sport, New Vector3(-3023.85, 80.96, 11.61), 317)
     Public RatonCanyonTrails As New Location("Raton Canyon Trails", New Vector3(-1511.41, 4971.09, 61.95), LocationType.Sport, New Vector3(-1492.77, 4968.99, 63.93), 75) With {.PedEnd = New Vector3(-1573.99, 4848.2, 60.58)}
+    Public sDPBeachS As New Location("South Del Perro Beach", New Vector3(-1457.92, -963.99, 6.75), LocationType.Sport, New Vector3(-1463.03, -979.96, 6.91), 181)
+    Public sVBeachN1 As New Location("North Vespucci Beach", New Vector3(-1400.62, -1028.97, 3.88), LocationType.Sport, New Vector3(-1413.8, -1046.67, 4.62), 135)
+    Public sVBeachN2 As New Location("North Vespucci Beach", New Vector3(-1316.78, -1201.07, 4), LocationType.Sport, New Vector3(-1367.04, -1196.21, 4.45), 212)
+    Public sDPBeachN As New Location("North Del Perro Beach", New Vector3(-1862.15, -616.73, 10.76), LocationType.Sport, New Vector3(-1868.61, -631.09, 11.09), 130)
 
     'FAST FOOD
     Public DPPUnA As New Location("Up-n-Atom, Del Perro Plaza", New Vector3(-1529.8, -444.44, 34.73), LocationType.FastFood, New Vector3(-1552.48, -440, 40.52), 229)
@@ -1229,6 +1413,7 @@ Public Module Places
     Public LaSpada As New Location("La Spada", New Vector3(-1046.724, -1398.146, 4.949), LocationType.Restaurant, New Vector3(-1038.01, -1396.84, 5.55), 84)
     Public ChebsEaterie As New Location("Chebs Eaterie", New Vector3(-730.21, -330.45, 35), LocationType.Restaurant, New Vector3(-735.26, -319.63, 36.22), 187)
     Public CafeRedemption As New Location("Cafe Redemption", New Vector3(-641.08, -308.14, 34.21), LocationType.Restaurant, New Vector3(-634.26, -302.17, 35.06), 131)
+    Public LastTrain As New Location("Last Train In Los Santos", New Vector3(-364.02, 251.64, 83.9), LocationType.Restaurant, New Vector3(-369.1, 267.09, 84.84), 186)
 
     'BAR
     Public PipelineInn As New Location("Pipeline Inn", New Vector3(-2182.395, -391.984, 12.83), LocationType.Bar, New Vector3(-2192.54, -389.54, 13.47), 249)
@@ -1236,6 +1421,15 @@ Public Module Places
     Public MojitoInn As New Location("Mojito Inn, Paleto Bay", New Vector3(-130.08, 6396.05, 30.88), LocationType.Bar, New Vector3(-121.04, 6394.28, 31.49), 82)
     Public Henhouse As New Location("The Hen House, Paleto Bay", New Vector3(-295.27, 6248.5, 30.82), LocationType.Bar, New Vector3(-295.15, 6259.08, 31.49), 174)
     Public BayviewLodge As New Location("Bayview Lodge, Paleto Bay", New Vector3(-700, 5816.39, 16.68), LocationType.Bar, New Vector3(-697.98, 5802.34, 17.33), 54)
+    Public Sightings As New Location("Sightings Bar & Restaurant", New Vector3(-865.79, -2543.2, 13.33), LocationType.Bar, New Vector3(-886.79, -2536.09, 14.55), 240)
+    Public Tequi As New Location("Tequi-La-La", New Vector3(-564.86, 267.92, 82.43), LocationType.Bar, New Vector3(-567.94, 274.83, 83.02), 194)
+    Public DungeonCrawler As New Location("Dungeon Crawler", New Vector3(-259.71, 252.11, 90.59), LocationType.Bar, New Vector3(-264.45, 245.73, 90.77), 344)
+    Public Cockatoos As New Location("Cockatoos Nightclub", New Vector3(-421.99, -34.9, 45.75), LocationType.Bar, New Vector3(-430.12, -24.4, 46.23), 274)
+    Public PenalCol As New Location("Penal Colony", New Vector3(-536.57, -64.83, 40.7), LocationType.Bar, New Vector3(-531.01, -62.84, 41.02), 139)
+    Public RobsChum As New Location("Rob's Liquor, Chumash", New Vector3(-2981.17, 389.71, 14.14), LocationType.Bar, New Vector3(-2968.54, 390.26, 15.04), 292)
+    Public RobsVes As New Location("Rob's Liquor, Vespucci", New Vector3(-1230.02, -896.64, 11.43), LocationType.Bar, New Vector3(-1223.81, -906.32, 12.33), 229)
+    Public RobsDP As New Location("Rob's Liquor, Del Perro", New Vector3(-1499.01, -394.84, 38.71), LocationType.Bar, New Vector3(-1487.55, -379.76, 40.16), 330)
+    Public Bahama As New Location("Bahama Mama's West", New Vector3(-1394.2, -581.62, 29.47), LocationType.Bar, New Vector3(-1389.47, -586.25, 30.26), 10)
 
     'SHOPPING
     Public BobMulet As New Location("Bob Mulet Hair & Beauty", New Vector3(-830.47, -190.49, 36.74), LocationType.Shopping, New Vector3(-812.96, -184.69, 37.57), 36)
@@ -1253,16 +1447,27 @@ Public Module Places
     Public ArirangPlaza As New Location("Arirang Plaza", New Vector3(-688.49, -826.51, 23.15), LocationType.Shopping, New Vector3(-690.75, -813.6, 23.93), 179)
     Public SimmetAlley As New Location("Simmet Alley", New Vector3(455.45, -820.15, 27.07), LocationType.Shopping, New Vector3(460.21, -794.62, 27.36), 89)
     Public Krapea As New Location("Krapea, Textile City", New Vector3(330.75, -772.94, 28.68), LocationType.Shopping, New Vector3(337.8, -777.29, 29.27), 69)
+    Public Chu247 As New Location("24-7, Chumash Family Pier", New Vector3(-3235.04, 1005.12, 11.85), LocationType.Shopping, New Vector3(-3243.35, 1002.05, 12.83), 173)
+    Public ChuHang As New Location("Hang Ten, Chumash", New Vector3(-2977.1, 433.89, 14.33), LocationType.Shopping, New Vector3(-2965.07, 432.85, 15.28), 94)
+    Public ChuTide As New Location("Tidemarks, Chumash", New Vector3(-2976.36, 457.16, 14.43), LocationType.Shopping, New Vector3(-2963.84, 454.82, 15.32), 91)
+    Public PonsonMW As New Location("Ponsonbys Morningwood", New Vector3(-1456.74, -225.29, 48.34), LocationType.Shopping, New Vector3(-1451.61, -241.21, 49.81), 321)
 
     'ENTERTAINMENT
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
     Public Tramway As New Location("Pala Springs Aerial Tramway", New Vector3(-771.53, 5582.98, 33.01), LocationType.Entertainment, New Vector3(-755.66, 5583.63, 36.71), 91) With {.PedEnd = New Vector3(-745.23, 5594.77, 41.65)}
     Public LSGC As New Location("Los Santos Gun Club", New Vector3(16.86, -1125.85, 29.3), LocationType.Entertainment, New Vector3(20.24, -1107.24, 29.8), 173)
     Public MazeBankArena As New Location("Maze Bank Arena", New Vector3(-235.91, -1863.7, 28.03), LocationType.Entertainment, New Vector3(-260.4, -1897.91, 27.76), 8)
+    Public DPBeachS As New Location("South Del Perro Beach", New Vector3(-1457.92, -963.99, 6.75), LocationType.Entertainment, New Vector3(-1463.03, -979.96, 6.91), 181)
+    Public VBeachN1 As New Location("North Vespucci Beach", New Vector3(-1400.62, -1028.97, 3.88), LocationType.Entertainment, New Vector3(-1413.8, -1046.67, 4.62), 135)
+    Public VBeachN2 As New Location("North Vespucci Beach", New Vector3(-1316.78, -1201.07, 4), LocationType.Entertainment, New Vector3(-1367.04, -1196.21, 4.45), 212)
+    Public SplitSides As New Location("Split Sides West", New Vector3(-429.43, 252.64, 82.51), LocationType.Entertainment, New Vector3(-423.71, 259.76, 83.1), 167)
+    Public ChuFamPier As New Location("Chumash Family Pier", New Vector3(-3235.25, 968.84, 12.59), LocationType.Entertainment, New Vector3(-3239.96, 971.7, 12.7), 90) With {.PedEnd = New Vector3(-3426.4, 967.81, 8.35)}
 
     'THEATER
     Public LosSantosTheater As New Location("Los Santos Theater", New Vector3(345.33, -867.2, 28.72), LocationType.Theater, New Vector3(353.7, -874.09, 29.29), 8)
     Public TenCentTheater As New Location("Ten Cent Theater", New Vector3(401.16, -711.92, 28.7), LocationType.Theater, New Vector3(394.68, -710.04, 29.28), 254)
+    Public TivoliTheater As New Location("Tivoli Theater", New Vector3(-1430.66, -193.99, 46.59), LocationType.Theater, New Vector3(-1423.98, -213.35, 46.5), 359)
+    Public MorningwoodTheater As New Location("Morningwood Theater", New Vector3(-1389.53, -190.44, 46.12), LocationType.Theater, New Vector3(-1372.27, -173.32, 47.47), 84)
 
     'S CLUB
     Public StripHornbills As New Location("Hornbill's", New Vector3(-380.469, 230.008, 83.622), LocationType.StripClub, New Vector3(-386.78, 220.33, 83.79), 6)
@@ -1276,6 +1481,15 @@ Public Module Places
     Public UD As New Location("Union Depository", New Vector3(-8.13, -741.36, 43.74), LocationType.Office, New Vector3(5.28, -709.38, 45.97), 184)
     Public MB As New Location("Maze Bank Tower", New Vector3(-50.06, -785.19, 43.75), LocationType.Office, New Vector3(-66.16, -800.06, 44.23), 334)
     Public DG As New Location("Daily Globe International", New Vector3(-300.64, -620.04, 33), LocationType.Office, New Vector3(-317.41, -610.01, 33.56), 250)
+    Public Weazel As New Location("Weazel News", New Vector3(-621.96, -930.59, 21.84), LocationType.Office, New Vector3(-600.64, -929.9, 23.86), 95)
+    Public NooseLSIA As New Location("N.O.O.S.E. LSIA", New Vector3(-880.37, -2419.36, 13.36), LocationType.Office, New Vector3(-894.21, -2401.18, 14.02), 191)
+    Public BilgecoLSIA As New Location("Bilgeco Shipping Services", New Vector3(-1006.02, -2113.84, 11.37), LocationType.Office, New Vector3(-1024.47, -2127.24, 13.16), 307)
+    Public LSCustLSIA As New Location("Los Santos Customs, LSIA", New Vector3(-1132.49, -1989.56, 12.67), LocationType.Office, New Vector3(-1141.05, -1991.34, 13.16), 276)
+    Public BurtonHealth As New Location("Burton Health Center", New Vector3(-423.94, -67.88, 42.29), LocationType.Office, New Vector3(-431.83, -60.78, 43), 274)
+    Public ChumFleeca As New Location("Fleeca Bank, Chumash", New Vector3(-2974.37, 483.18, 14.55), LocationType.Office, New Vector3(-2967.19, 482.39, 15.69), 99)
+    Public CityHallDP As New Location("Del Perro City Hall", New Vector3(-1272.96, -560.89, 29.14), LocationType.Office, New Vector3(-1285.19, -566.24, 31.71), 307)
+    Public MazeOfficeDP As New Location("Maze Bank Office, Del Perro", New Vector3(-1401.03, -514.78, 31.03), LocationType.Office, New Vector3(-1382.44, -502.77, 33.16), 179)
+    Public LiveInv As New Location("Live Invader HQ", New Vector3(-1076.87, -265.67, 36.96), LocationType.Office, New Vector3(-1084.55, -262.85, 37.76), 238)
 
     'HOTEL
     Public HotelRichman As New Location("Richman Hotel", New Vector3(-1285.498, 294.565, 64.368), LocationType.HotelLS, New Vector3(-1274.5, 313.97, 65.51), 151)
@@ -1292,10 +1506,15 @@ Public Module Places
     Public HotelVCLSIA2 As New Location("Von Crastenburg Hotel, LSIA", New Vector3(-882.35, -2107.39, 8.14), LocationType.HotelLS, New Vector3(-878.67, -2179.05, 9.81), 134)
     Public HotelOpium As New Location("Opium Nights Hotel, LSIA", New Vector3(-689.92, -2287.82, 12.87), LocationType.HotelLS, New Vector3(-702.13, -2276.6, 13.46), 229)
     Public HotelOpium2 As New Location("Opium Nights Hotel, LSIA", New Vector3(-754.43, -2292.86, 12.14), LocationType.HotelLS, New Vector3(-737.53, -2277.44, 13.44), 133)
+    Public HotelBannerPH As New Location("Banner Hotel, Pillbox Hill", New Vector3(-278.28, -1065.08, 25.04), LocationType.Entertainment, New Vector3(-286.06, -1061.29, 27.21), 253)
+    Public HotelGeneric As New Location("The Generic Hotel", New Vector3(-479.44, 225.87, 82.63), LocationType.Entertainment, New Vector3(-482.92, 219.25, 83.7), 341)
+    Public HotelPegasusConc As New Location("Pegasus Concierge Hotel", New Vector3(-310.2, 226.61, 87.43), LocationType.Entertainment, New Vector3(-310.84, 222.29, 87.93), 12)
+    Public HotelGentry As New Location("Gentry Manor Hotel", New Vector3(-62.57, 329.18, 110.3), LocationType.Entertainment, New Vector3(-37.19, 381.56, 113.9), 60)
 
     'MOTEL
     Public PerreraBeach As New Location("Perrera Beach Motel", New Vector3(-1480.4, -669.76, 28.23), LocationType.MotelLS, New Vector3(-1478.68, -649.89, 29.58), 162) With {.PedEnd = New Vector3(-1479.64, -674.43, 29.04)}
     Public DreamView As New Location("Dream View Motel, Paleto Bay", New Vector3(-94.06, 6310.33, 31.02), LocationType.MotelBC, New Vector3(-106.33, 6315.21, 31.49), 212)
+    Public CrownJewels As New Location("Crown Jewels Motel", New Vector3(-1300.2, -922.46, 10.55), LocationType.MotelBC, New Vector3(-1308.91, -930.84, 13.36), 313)
 
     'AIRPORT
     Public LSIA1Depart = New Location("LSIA Terminal 1 Departures", New Vector3(-1016.76, -2477.951, 19.596), LocationType.AirportDepart, New Vector3(-1029.35, -2486.58, 20.17), 253)
@@ -1394,7 +1613,7 @@ Public Module Places
     Public NSA1111 As New Location("1111 North Sheldon Ave", New Vector3(-1225.09, 665.88, 142.96), LocationType.Residential, New Vector3(-1218.73, 666.08, 144.53), 85)
     Public NSA1113 As New Location("1113 North Sheldon Ave", New Vector3(-1202.93, 691.86, 146.28), LocationType.Residential, New Vector3(-1197.29, 693.49, 147.42), 88)
     Public NSA1115 As New Location("1115 North Sheldon Ave", New Vector3(-1163.07, 747.48, 153.66), LocationType.Residential, New Vector3(-1165.25, 728.7, 155.61), 53)
-    Public NSA1117 As New Location("1117 North Sheldon Ave", New Vector3(-148.39, 775.59, 161.44), LocationType.Residential, New Vector3(-1118.37, 762.3, 164.29), 35)
+    Public NSA1117 As New Location("1117 North Sheldon Ave", New Vector3(-1118.39, 775.59, 161.44), LocationType.Residential, New Vector3(-1118.37, 762.3, 164.29), 35)
     Public NSA1112 As New Location("1112 North Sheldon Ave", New Vector3(-1040.12, 792.68, 166.92), LocationType.Residential, New Vector3(-1051.57, 794.85, 167.01), 207)
     Public NSA1110 As New Location("1110 North Sheldon Ave", New Vector3(-1095.98, 786.03, 163.44), LocationType.Residential, New Vector3(-1100.32, 796.2, 166.99), 200)
     Public NSA1108 As New Location("1108 North Sheldon Ave", New Vector3(-1118.1, 781.31, 166.62), LocationType.Residential, New Vector3(-1129.95, 783.95, 163.89), 261)
@@ -1404,6 +1623,30 @@ Public Module Places
     Public Alta1144 As New Location("1144 Alta St", New Vector3(98.88, -85.93, 61.43), LocationType.Residential, New Vector3(64.09, -81.33, 66.7), 342)
     Public Alta1145 As New Location("1145 Alta St", New Vector3(93.45, -101.94, 58.46), LocationType.Residential, New Vector3(74.94, -107.3, 58.19), 313)
     Public VistaDelMarApts As New Location("Vista Del Mar Apartments", New Vector3(-1037.748, -1530.254, 4.529), LocationType.Residential, New Vector3(-1029.53, -1505.1, 4.9), 211)
+    Public SRD122 As New Location("122 South Rockford Dr", New Vector3(-799.3, -991.6, 12.86), LocationType.Residential, New Vector3(-813.13, -981.2, 14.14), 157)
+    Public VB2057 As New Location("2057 Vespucci Blvd", New Vector3(-666.35, -846.62, 32.5), LocationType.Residential, New Vector3(-662.52, -854.18, 24.46), 9)
+    Public BDP1115 As New Location("1115 Boulevard Del Perro", New Vector3(-1609.42, -411.52, 40.67), LocationType.Residential, New Vector3(-1598.22, -421.69, 41.41), 51)
+    Public EclipseTowers As New Location("Eclipse Towers", New Vector3(-774.24, 293.42, 85.15), LocationType.Residential, New Vector3(-773.88, 311.63, 85.7), 191)
+
+
+    Public Barbareno1 As New Location("1 Barbareno Rd, Chumash", New Vector3(-3172.41, 1289.02, 13.41), LocationType.Residential, New Vector3(-3190.34, 1297.37, 19.07), 247)
+    Public Barbareno2 As New Location("2 Barbareno Rd, Chumash", New Vector3(-3176.96, 1271.39, 11.98), LocationType.Residential, New Vector3(-3186.28, 1273.3, 12.93), 250)
+    Public Barbareno3 As New Location("3 Barbareno Rd, Chumash", New Vector3(-3184.02, 1223.59, 9.64), LocationType.Residential, New Vector3(-3194.51, 1230.73, 10.05), 292)
+    Public Barbareno4 As New Location("4 Barbareno Rd, Chumash", New Vector3(-3186.07, 1200.83, 9.16), LocationType.Residential, New Vector3(-3205.32, 1198.95, 9.54), 99)
+    Public Barbareno5 As New Location("5 Barbareno Rd, Chumash", New Vector3(-3188.7, 1176.57, 9.05), LocationType.Residential, New Vector3(-3205.7, 1186.27, 9.66), 352)
+    Public Barbareno6 As New Location("6 Barbareno Rd, Chumash", New Vector3(-3193.35, 1156.28, 9.18), LocationType.Residential, New Vector3(-3198.94, 1164.24, 9.65), 231)
+    Public Barbareno7 As New Location("7 Barbareno Rd, Chumash", New Vector3(-3193.35, 1156.28, 9.18), LocationType.Residential, New Vector3(-3204.1, 1151.96, 9.65), 293)
+    Public Barbareno8 As New Location("8 Barbareno Rd, Chumash", New Vector3(-3201.44, 1136.83, 9.46), LocationType.Residential, New Vector3(-3209.43, 1146.02, 9.9), 252)
+    Public Barbareno9 As New Location("9 Barbareno Rd, Chumash", New Vector3(-3215.84, 1104.29, 10.02), LocationType.Residential, New Vector3(-3224.81, 1113.62, 10.58), 245)
+    Public Barbareno10 As New Location("10 Barbareno Rd, Chumash", New Vector3(-3223.05, 1086.69, 10.33), LocationType.Residential, New Vector3(-3231.81, 1079.29, 10.84), 270)
+    Public Barbareno11 As New Location("11 Barbareno Rd, Chumash", New Vector3(-3227.93, 1065.93, 10.71), LocationType.Residential, New Vector3(-3232.38, 1067.4, 11.02), 251)
+    Public Barbareno12 As New Location("12 Barbareno Rd, Chumash", New Vector3(-3232.1, 1036.52, 11.25), LocationType.Residential, New Vector3(-3253.59, 1042.83, 11.76), 264)
+    Public Barbareno14 As New Location("14 Barbareno Rd, Chumash", New Vector3(-3230.46, 951.99, 12.65), LocationType.Residential, New Vector3(-3237.3, 952.97, 13.14), 275)
+    Public Barbareno15 As New Location("15 Barbareno Rd, Chumash", New Vector3(-3226.83, 938.8, 12.94), LocationType.Residential, New Vector3(-3232.34, 934.62, 13.8), 297)
+    Public Barbareno16 As New Location("16 Barbareno Rd, Chumash", New Vector3(-3221.6, 928.33, 13.18), LocationType.Residential, New Vector3(-3228.25, 927.8, 13.97), 293)
+    Public Barbareno17 As New Location("17 Barbareno Rd, Chumash", New Vector3(-3211.66, 916.67, 13.46), LocationType.Residential, New Vector3(-3218.1, 912.81, 13.99), 313)
+
+    'Public x As New Location("xxx", New Vector3(), LocationType.x, New Vector3(), 0)
 
     Public Sub initPlaceLists()
         For Each l As Location In ListOfPlaces
@@ -1446,10 +1689,7 @@ End Module
 
 'TO-DO LIST
 
-'DELETE BLIPS UPON REACHING THEM
-'PAY PLAYER
 'SHOW MISSION MARKER ARROW AT ORIGIN/DESTINATION
-'PED PAUSES AT ARRIVAL POINT BEFORE BECOMING NOLONGERNEEDED
 'PED WALKS TO/FROM CAR INSTEAD OF RUNNING
 'IMPLEMENT TIP PAY
 '   based on speed, driving style & vehicle condition
