@@ -11,7 +11,7 @@ A ScriptHookVDotNet mod for Grand Theft Auto V, which aims to improve the taxi d
 - Player is paid based on distance between pick-up and drop-off locations. Base fare is $6, and every mile driven is $25.
 - Customers tip player based on the speed of delivery.
 
-#Planned Features
+#Wishlist
 - More locations
 - More tip payment factors based on performance (vehicle damage state, speed of pick-up)
 - Celebrity passengers (who tip better)
