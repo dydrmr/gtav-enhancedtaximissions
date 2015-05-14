@@ -33,6 +33,11 @@ Public Class EnhancedTaxiMissions
 
     Public Customer As Person
     Public CustomerPed As Ped
+    Public isThereASecondCustomer As Boolean = False
+    Public isThereAThirdCustomer As Boolean = False
+    Public Customer2Ped As Ped
+    Public Customer3Ped As Ped
+    Public Ped1Blip, Ped2Blip, Ped3Blip As Blip
 
     Public MissionStartTime As Integer
     Public OriginArrivalTime As Integer
@@ -45,15 +50,11 @@ Public Class EnhancedTaxiMissions
     Public ArrivalWindowEnd As Integer
     Public AverageSpeed As Integer = 65
 
-    Public isThereASecondCustomer As Boolean = False
-    Public isThereAThirdCustomer As Boolean = False
-    Public Customer2Ped As Ped
-    Public Customer3Ped As Ped
-
     Public isCustomerPedSpawned As Boolean = False
     Public isDestinationCleared As Boolean = False
     Public isCustomerNudged1 As Boolean = False
     Public isCustomerNudged2 As Boolean = False
+    Public NudgeResetTime As Integer = 0
 
     Public NearestLocationDistance As Integer
 
@@ -172,7 +173,7 @@ Public Class EnhancedTaxiMissions
 
         checkIfMinigameIsActive()
 
-        updateGameTime()
+        updateIngameTime()
         updateDistances()
         updateRoutes()
         updateTaxiLight()
@@ -181,7 +182,10 @@ Public Class EnhancedTaxiMissions
         checkIfCloseEnoughToSpawnPed()
         checkIfPlayerHasArrivedAtOrigin()
         checkIfPlayerHasStoppedAtOrigin()
+
+        resetNudgeFlags()
         checkIfPassengerNeedsToBeNudged()
+
         checkIfPedHasReachedCar()
         checkIfPedHasEnteredCar()
         checkIfCloseEnoughToClearDestination()
@@ -361,9 +365,9 @@ Public Class EnhancedTaxiMissions
                 ElseIf s < 5 Then
                     col = Color.Red
                 Else
-                col = Color.Green
-            End If
-            UI.Items.Add(New UIText(s.ToString, New Point(175, 0), 0.5, col, 4, True))
+                    col = Color.Green
+                End If
+                UI.Items.Add(New UIText(s.ToString, New Point(175, 0), 0.5, col, 4, True))
             End If
         Else
             UI.Items.Add(New UIText(IngameHour.ToString("D2") & ":" & IngameMinute.ToString("D2"), New Point(156, 0), 0.5, UItext_White, 4, False))
@@ -483,7 +487,7 @@ Public Class EnhancedTaxiMissions
 
         'Exit Sub
 
-        If IngameMinute Mod 10 = 0 Then
+        If IngameMinute Mod 4 = 0 Then
             If MiniGameStage = MiniGameStages.DrivingToOrigin Then
                 OriginBlip.ShowRoute = False
                 OriginBlip.ShowRoute = True
@@ -496,7 +500,7 @@ Public Class EnhancedTaxiMissions
         End If
     End Sub
 
-    Public Sub updateGameTime()
+    Public Sub updateIngameTime()
         IngameHour = World.CurrentDayTime.Hours
         IngameMinute = World.CurrentDayTime.Minutes
     End Sub
@@ -509,6 +513,20 @@ Public Class EnhancedTaxiMissions
                 Else
                     Game.Player.Character.CurrentVehicle.TaxiLightOn = True
                 End If
+            End If
+        End If
+    End Sub
+
+    Public Sub resetNudgeFlags()
+        If isCustomerNudged1 = True Then
+            If Game.GameTime > NudgeResetTime Then
+                isCustomerNudged1 = False
+            End If
+        End If
+
+        If isCustomerNudged2 = True Then
+            If Game.GameTime > NudgeResetTime Then
+                isCustomerNudged2 = False
             End If
         End If
     End Sub
@@ -539,13 +557,14 @@ Public Class EnhancedTaxiMissions
                         CustomerPed = World.CreatePed(New GTA.Model(Customer.Model), Origin.PedStart, Origin.PedStartHDG)
                     Else
                         CustomerPed = GTA.Native.Function.Call(Of Ped)(Native.Hash.CREATE_RANDOM_PED, pos.X, pos.Y, pos.Z + 0.3)
-                        CustomerPed.Heading = Origin.PedStartHDG
+                        If CustomerPed.Exists Then
+                            CustomerPed.Heading = Origin.PedStartHDG
+                            CustomerPed.Money = RND.Next(10, 200)
+                        End If
                     End If
 
                     'TO-DO
                     'PUT PEDS INTO A GROUP OR SET THEIR RELATIONSHIPS TO FRIENDLY SO THEY DON'T PANIC WHEN THEY ALL GET INTO THE CAR
-                    CustomerPed.Money = RND.Next(10, 200)
-
 
                     If isThereASecondCustomer = True Then
                         Customer2Ped = GTA.Native.Function.Call(Of Ped)(Native.Hash.CREATE_RANDOM_PED, pos.X + 0.2, pos.Y + 0.2, pos.Z + 0.3)
@@ -622,32 +641,60 @@ Public Class EnhancedTaxiMissions
 
     Public Sub checkIfPassengerNeedsToBeNudged()
         Dim isHonking As Boolean
-        isHonking = GTA.Native.Function.Call(Of Boolean)(Native.Hash.IS_PLAYER_PRESSING_HORN, Game.Player)
+        isHonking = Game.Player.IsPressingHorn
 
         If MiniGameStage = MiniGameStages.PedWalkingToCar Then
             If isHonking = True Then
                 If isCustomerNudged1 = False Then
                     If CustomerPed.Exists Then
                         CustomerPed.Position = CustomerPed.Position + CustomerPed.ForwardVector * 2
+                        CustomerPed.Task.GoTo(Game.Player.Character.Position, False)
+
+                        If isThereASecondCustomer = True Then
+                            If Customer2Ped IsNot Nothing Then
+                                If Customer2Ped.Exists = True Then
+                                    Customer2Ped.Position = Customer2Ped.Position + Customer2Ped.ForwardVector * 2
+                                    Customer2Ped.Task.GoTo(Game.Player.Character.Position, False)
+                                End If
+                            End If
+                        End If
+
+                        If isThereAThirdCustomer = True Then
+                            If Customer3Ped IsNot Nothing Then
+                                If Customer3Ped.Exists = True Then
+                                    Customer3Ped.Position = Customer3Ped.Position + Customer3Ped.ForwardVector * 2
+                                    Customer3Ped.Task.GoTo(Game.Player.Character.Position, False)
+                                End If
+                            End If
+                        End If
+
                         isCustomerNudged1 = True
+                        NudgeResetTime = Game.GameTime + 1250
                     End If
                 End If
             End If
         End If
 
+
+
         If MiniGameStage = MiniGameStages.PedGettingInCar Then
             If isHonking = True Then
                 If isCustomerNudged2 = False Then
                     If CustomerPed.Exists Then
-                        CustomerPed.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, VehicleSeat.RightRear, 1000)
+                        CustomerPed.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, VehicleSeat.RightRear, 8000)
                     End If
                     If isThereASecondCustomer = True Then
-                        Customer2Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, VehicleSeat.LeftRear, 1000)
+                        If Customer2Ped.Exists Then
+                            Customer2Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, VehicleSeat.LeftRear, 8000)
+                        End If
                     End If
                     If isThereAThirdCustomer = True Then
-                        Customer3Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, VehicleSeat.Passenger, 1000)
+                        If Customer3Ped.Exists Then
+                            Customer3Ped.Task.EnterVehicle(Game.Player.Character.CurrentVehicle, VehicleSeat.Passenger, 8000)
+                        End If
                     End If
                     isCustomerNudged2 = True
+                    NudgeResetTime = Game.GameTime + 1250
                 End If
             End If
         End If
@@ -655,13 +702,15 @@ Public Class EnhancedTaxiMissions
 
     Public Sub checkIfPedHasReachedCar()
         If MiniGameStage = MiniGameStages.PedWalkingToCar Then
-            If CustomerPed.Exists = True Then
-                Dim tgt As Vector3 = Game.Player.Character.Position
-                Dim ppo As Vector3 = CustomerPed.Position
-                Dim distance As Single = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, tgt.X, tgt.Y, tgt.Z, ppo.X, ppo.Y, ppo.Z, 1)
+            If CustomerPed IsNot Nothing Then
+                If CustomerPed.Exists = True Then
+                    Dim tgt As Vector3 = Game.Player.Character.Position
+                    Dim ppo As Vector3 = CustomerPed.Position
+                    Dim distance As Single = World.GetDistance(tgt, ppo)
 
-                If distance < 8 Then
-                    PedHasReachedCar()
+                    If distance < 9 Then
+                        PedHasReachedCar()
+                    End If
                 End If
             End If
         End If
@@ -859,6 +908,10 @@ Public Class EnhancedTaxiMissions
                     CustomerPed.Task.FleeFrom(Game.Player.Character)
                 End If
                 CustomerPed.MarkAsNoLongerNeeded()
+                If Ped1Blip.Exists Then
+                    Ped1Blip.Remove()
+                    Ped1Blip = Nothing
+                End If
             End If
         End If
 
@@ -871,6 +924,10 @@ Public Class EnhancedTaxiMissions
                     CustomerPed.Task.FleeFrom(Game.Player.Character)
                 End If
                 Customer2Ped.MarkAsNoLongerNeeded()
+                If Ped2Blip.Exists Then
+                    Ped2Blip.Remove()
+                    Ped2Blip = Nothing
+                End If
             End If
         End If
 
@@ -883,6 +940,10 @@ Public Class EnhancedTaxiMissions
                     Customer3Ped.Task.FleeFrom(Game.Player.Character)
                 End If
                 Customer3Ped.MarkAsNoLongerNeeded()
+                If Ped3Blip.Exists Then
+                    Ped3Blip.Remove()
+                    Ped3Blip = Nothing
+                End If
             End If
         End If
 
@@ -1263,20 +1324,31 @@ Public Class EnhancedTaxiMissions
             ppos = Game.Player.Character.Position
         End If
 
-
-        If CustomerPed.Exists Then
-            CustomerPed.Task.GoTo(ppos, False)
+        If CustomerPed IsNot Nothing Then
+            If CustomerPed.Exists Then
+                CustomerPed.Task.GoTo(ppos, False)
+                Ped1Blip = CustomerPed.AddBlip
+                Ped1Blip.Scale = 0.6
+            End If
         End If
 
         If isThereASecondCustomer = True Then
-            If Customer2Ped.Exists = True Then
-                Customer2Ped.Task.GoTo(ppos, False)
+            If Customer2Ped IsNot Nothing Then
+                If Customer2Ped.Exists = True Then
+                    Customer2Ped.Task.GoTo(ppos, False)
+                    Ped2Blip = Customer2Ped.AddBlip
+                    Ped2Blip.Scale = 0.6
+                End If
             End If
         End If
 
         If isThereAThirdCustomer = True Then
-            If Customer3Ped.Exists = True Then
-                Customer3Ped.Task.GoTo(ppos, False)
+            If Customer3Ped IsNot Nothing Then
+                If Customer3Ped.Exists = True Then
+                    Customer3Ped.Task.GoTo(ppos, False)
+                    Ped3Blip = Customer3Ped.AddBlip
+                    Ped3Blip.Scale = 0.6
+                End If
             End If
         End If
 
@@ -1296,6 +1368,7 @@ Public Class EnhancedTaxiMissions
                 UI_DispatchStatus = "Customer has been notified of your arrival"
             End If
         End If
+
         MiniGameStage = MiniGameStages.PedWalkingToCar
 
     End Sub
@@ -1328,6 +1401,29 @@ Public Class EnhancedTaxiMissions
         DestinationBlip = World.CreateBlip(Destination.Coords)
         DestinationBlip.Color = BlipColor.Blue
         DestinationBlip.ShowRoute = True
+
+        If CustomerPed IsNot Nothing Then
+            If CustomerPed.Exists Then
+                Ped1Blip.Remove()
+            End If
+        End If
+
+        If isThereASecondCustomer = True Then
+            If Customer2Ped IsNot Nothing Then
+                If Customer2Ped.Exists Then
+                    Ped2Blip.Remove()
+                End If
+            End If
+        End If
+
+        If isThereAThirdCustomer = True Then
+            If Customer3Ped IsNot Nothing Then
+                If Customer3Ped.Exists Then
+                    Ped3Blip.Remove()
+                End If
+            End If
+        End If
+
 
         UI_DispatchStatus = "Please drive the customer to the destination"
         If isThereASecondCustomer = True Then
@@ -1372,17 +1468,32 @@ Public Class EnhancedTaxiMissions
             LeaveSequence.AddTask.GoTo(Destination.PedEnd, False)
         End If
         LeaveSequence.AddTask.Wait(25000)
-        CustomerPed.Task.PerformSequence(LeaveSequence)
-        CustomerPed.MarkAsNoLongerNeeded()
 
-        If isThereASecondCustomer = True Then
-            Customer2Ped.Task.PerformSequence(LeaveSequence)
-            Customer2Ped.MarkAsNoLongerNeeded()
+
+        If CustomerPed IsNot Nothing Then
+            If CustomerPed.Exists = True Then
+                CustomerPed.Task.PerformSequence(LeaveSequence)
+                CustomerPed.MarkAsNoLongerNeeded()
+            End If
         End If
 
+        If isThereASecondCustomer = True Then
+            If Customer2Ped IsNot Nothing Then
+                If Customer2Ped.Exists Then
+                    Customer2Ped.Task.PerformSequence(LeaveSequence)
+                    Customer2Ped.MarkAsNoLongerNeeded()
+                End If
+            End If
+        End If
+
+
         If isThereAThirdCustomer = True Then
-            Customer3Ped.Task.PerformSequence(LeaveSequence)
-            Customer3Ped.MarkAsNoLongerNeeded()
+            If Customer3Ped IsNot Nothing Then
+                If Customer3Ped.Exists Then
+                    Customer3Ped.Task.PerformSequence(LeaveSequence)
+                    Customer3Ped.MarkAsNoLongerNeeded()
+                End If
+            End If
         End If
 
         payPlayer(FareTotal)
@@ -1571,6 +1682,9 @@ Public Module Places
     Public CoolBeansMP As New Location("Cool Beans, Mirror Park", New Vector3(1195.04, -403.86, 67.56), LocationType.FastFood, New Vector3(1181.57, -393.69, 68.02), 227)
     Public Hornys As New Location("Horny's, Mirror Park", New Vector3(1239.12, -376.58, 68.6), LocationType.FastFood, New Vector3(1241.25, -367.15, 69.08), 176)
     Public BSDP As New Location("Burger Shot, Del Perro", New Vector3(-1205, -878.4, 12.8), LocationType.FastFood, New Vector3(-1198, -883.9, 13.8), 33)
+    Public CocoCafe As New Location("Coconut Cafe, Vespucci", New Vector3(-1104.8, -1451.3, 4.6), LocationType.FastFood, New Vector3(-1110.8, -1453.1, 5.1), 252)
+    Public IceMaiden As New Location("Icemaiden, Vespucci", New Vector3(-1173.7, -1428.4, 4), LocationType.FastFood, New Vector3(-1171.9, -1434.6, 4.4), 28)
+    Public MusclePeach As New Location("Muscle Peach Cafe, Vespucci", New Vector3(-1187.5, -1528.6, 4), LocationType.FastFood, New Vector3(-1186.9, -1533.7, 4.4), 5)
 
     'RESTAURANT
     Public LaSpada As New Location("La Spada", New Vector3(-1046.724, -1398.146, 4.949), LocationType.Restaurant, New Vector3(-1038.01, -1396.84, 5.55), 84)
@@ -1631,6 +1745,7 @@ Public Module Places
     Public DavisMM As New Location("Davis Mega Mall", New Vector3(68.09, -1707.57, 28.67), LocationType.Shopping, New Vector3(61.38, -1728.26, 29.53), 46)
     Public VBSidewMark As New Location("Vespucci Beach Sidewalk Market", New Vector3(-1208.53, -1444.11, 3.9), LocationType.Shopping, New Vector3(-1237.16, -1468.65, 4.29), 126)
     Public ThePit As New Location("The Pit", New Vector3(-1163.91, -1415.34, 4.38), LocationType.Shopping, New Vector3(-1155.54, -1426.46, 4.95), 319)
+    Public VespMall As New Location("Vespucci Mall", New Vector3(-803.1, -1095.8, 10.4), LocationType.Shopping, New Vector3(-824, -1084.3, 11.1), 256)
 
     'ENTERTAINMENT
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
@@ -1692,6 +1807,7 @@ Public Module Places
     Public PacStanBank As New Location("Pacific Standard Bank", New Vector3(225.61, 200.76, 104.96), LocationType.Office, New Vector3(239.99, 219.95, 106.29), 308)
     Public Wenger1 As New Location("Wenger Institute", New Vector3(-294.94, -279.51, 30.61), LocationType.Office, New Vector3(-309.69, -279.12, 31.72), 265)
     Public Wenger2 As New Location("Wenger Institute", New Vector3(-383.61, -237.61, 35.17), LocationType.Office, New Vector3(-369.15, -240.52, 36.08), 61)
+    Public Vesp707 As New Location("707 Vespucci Blvd", New Vector3(-274.7, -834.1, 31.2), LocationType.Office, New Vector3(-262.4, -837.6, 31.5), 129)
 
     'HOTEL
     Public HotelRichman As New Location("Richman Hotel", New Vector3(-1285.498, 294.565, 64.368), LocationType.HotelLS, New Vector3(-1274.5, 313.97, 65.51), 151)
@@ -1879,6 +1995,9 @@ Public Module Places
     Public SpanAv1160 As New Location("1160 Spanish Ave", New Vector3(356.82, -124.23, 65.71), LocationType.Residential, New Vector3(352.91, -141.05, 66.69), 334)
     Public TheRoyale As New Location("The Royale", New Vector3(-202.64, 114.13, 69.09), LocationType.Residential, New Vector3(-197.46, 86.8, 69.75), 4)
     Public EclipseLodgeApts As New Location("Eclipse Lodge Apartments", New Vector3(-269.15, 26.8, 54.31), LocationType.Residential, New Vector3(-273.24, 28.41, 54.75), 233)
+    Public VespCan1 As New Location("Vespucci Canals", New Vector3(-1094, -959.4, 1.9), LocationType.Residential, New Vector3(-1061.2, -944.7, 2.2), 200)
+    Public VespCan2 As New Location("Vespucci Canals", New Vector3(-1058.2, -1040.2, 1.6), LocationType.Residential, New Vector3(-1066, -1051.2, 6.4), 306)
+    Public Goma1 As New Location("Apartment, Goma St, Vespucci", New Vector3(-1134.3, -1478, 4), LocationType.Residential, New Vector3(-1145.7, -1465.9, 7.7), 299)
 
 
     Public Barbareno1 As New Location("1 Barbareno Rd, Chumash", New Vector3(-3172.41, 1289.02, 13.41), LocationType.Residential, New Vector3(-3190.34, 1297.37, 19.07), 247)
