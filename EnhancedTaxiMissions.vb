@@ -1548,9 +1548,13 @@ Public Module Places
     Public PBCC As New Location("Pacific Bluffs Country Club", New Vector3(-3016.76, 85.64, 11.2), LocationType.Sport, New Vector3(-3023.85, 80.96, 11.61), 317)
     Public RatonCanyonTrails As New Location("Raton Canyon Trails", New Vector3(-1511.41, 4971.09, 61.95), LocationType.Sport, New Vector3(-1492.77, 4968.99, 63.93), 75) With {.PedEnd = New Vector3(-1573.99, 4848.2, 60.58)}
     Public sDPBeachS As New Location("South Del Perro Beach", New Vector3(-1457.92, -963.99, 6.75), LocationType.Sport, New Vector3(-1463.03, -979.96, 6.91), 181)
+    Public sDPBeachC As New Location("Central Del Perro Beach", New Vector3(-1725.3, -733.1, 9.9), LocationType.Sport, New Vector3(-1730.3, -739.3, 9.95), 230)
     Public sVBeachN1 As New Location("North Vespucci Beach", New Vector3(-1400.62, -1028.97, 3.88), LocationType.Sport, New Vector3(-1413.8, -1046.67, 4.62), 135)
     Public sVBeachN2 As New Location("North Vespucci Beach", New Vector3(-1316.78, -1201.07, 4), LocationType.Sport, New Vector3(-1367.04, -1196.21, 4.45), 212)
     Public sDPBeachN As New Location("North Del Perro Beach", New Vector3(-1862.15, -616.73, 10.76), LocationType.Sport, New Vector3(-1868.61, -631.09, 11.09), 130)
+    Public MirrorPark As New Location("Mirror Park", New Vector3(1040.04, -531.29, 60.78), LocationType.Sport, New Vector3(1046.1, -535.54, 61.03), 207)
+    Public PuertaDelSol As New Location("Puerta Del Sol", New Vector3(-816.06, -133.44, 4.62), LocationType.Sport, New Vector3(-816.41, -1346.46, 5.15), 48)
+    Public KoiSpa As New Location("Koi Retreat & Spa", New Vector3(-1047.08, -1467.7, 4.6), LocationType.Sport, New Vector3(-1040.63, -1474.9, 5.6), 53)
 
     'FAST FOOD
     Public DPPUnA As New Location("Up-n-Atom, Del Perro Plaza", New Vector3(-1529.8, -444.44, 34.73), LocationType.FastFood, New Vector3(-1552.48, -440, 40.52), 229)
@@ -1565,13 +1569,18 @@ Public Module Places
     Public BeanLitSeo As New Location("Bean Machine, Little Seoul", New Vector3(-826.09, -641.22, 26.91), LocationType.FastFood, New Vector3(-839, -609.28, 29.03), 146)
     Public SHoLitSeo As New Location("S. Ho Korean Noodle House, Little Seoul", New Vector3(-826.09, -641.22, 26.91), LocationType.FastFood, New Vector3(-798.27, -635.43, 29.03), 100)
     Public NoodlLS As New Location("Noodle Exchange, Legion Square", New Vector3(260.26, -970.32, 28.7), LocationType.FastFood, New Vector3(272.12, -964.79, 29.3), 42)
-    Public CoolBeans As New Location("Cool Beans, Legion Square", New Vector3(260.26, -970.32, 28.7), LocationType.FastFood, New Vector3(263.08, -981.74, 29.36), 86)
+    Public CoolBeansLS As New Location("Cool Beans, Legion Square", New Vector3(260.26, -970.32, 28.7), LocationType.FastFood, New Vector3(263.08, -981.74, 29.36), 86)
+    Public CoolBeansMP As New Location("Cool Beans, Mirror Park", New Vector3(1195.04, -403.86, 67.56), LocationType.FastFood, New Vector3(1181.57, -393.69, 68.02), 227)
+    Public Hornys As New Location("Horny's, Mirror Park", New Vector3(1239.12, -376.58, 68.6), LocationType.FastFood, New Vector3(1241.25, -367.15, 69.08), 176)
+    Public BSDP As New Location("Burger Shot, Del Perro", New Vector3(-1205, -878.4, 12.8), LocationType.FastFood, New Vector3(-1198, -883.9, 13.8), 33)
 
     'RESTAURANT
     Public LaSpada As New Location("La Spada", New Vector3(-1046.724, -1398.146, 4.949), LocationType.Restaurant, New Vector3(-1038.01, -1396.84, 5.55), 84)
     Public ChebsEaterie As New Location("Chebs Eaterie", New Vector3(-730.21, -330.45, 35), LocationType.Restaurant, New Vector3(-735.26, -319.63, 36.22), 187)
     Public CafeRedemption As New Location("Cafe Redemption", New Vector3(-641.08, -308.14, 34.21), LocationType.Restaurant, New Vector3(-634.26, -302.17, 35.06), 131)
     Public LastTrain As New Location("Last Train In Los Santos", New Vector3(-364.02, 251.64, 83.9), LocationType.Restaurant, New Vector3(-369.1, 267.09, 84.84), 186)
+    Public AlDentV As New Location("Al Dente's, Vespucci", New Vector3(-1184.04, -1419.9, 3.98), LocationType.Restaurant, New Vector3(-1186.5, -1413.4, 4.4), 199)
+    Public PrawnViv As New Location("Prawn Vivant, Vespucci", New Vector3(-1227.5, -1096.9, 7.6), LocationType.Restaurant, New Vector3(-1221.8, -1096.2, 8.1), 107)
 
     'BAR
     Public PipelineInn As New Location("Pipeline Inn", New Vector3(-2182.395, -391.984, 12.83), LocationType.Bar, New Vector3(-2192.54, -389.54, 13.47), 249)
@@ -1591,6 +1600,7 @@ Public Module Places
     Public Chaps As New Location("Chaps Nightclub", New Vector3(-475.51, -101.19, 38.35), LocationType.Bar, New Vector3(-473.49, -94.59, 39.28), 164)
     Public Singletons As New Location("Singletons Bar", New Vector3(233.21, 301.46, 105.17), LocationType.Bar, New Vector3(221.6, 307.5, 105.57), 194)
     Public Clappers As New Location("Clappers", New Vector3(405.86, 131.85, 101.36), LocationType.Bar, New Vector3(412.27, 150.72, 103.21), 161)
+    Public MirrParTav As New Location("Mirror Park Tavern", New Vector3(1209.94, -415.29, 67.26), LocationType.Bar, New Vector3(1217.94, -416.8, 67.78), 78)
 
     'SHOPPING
     Public BobMulet As New Location("Bob Mulet Hair & Beauty", New Vector3(-830.47, -190.49, 36.74), LocationType.Shopping, New Vector3(-812.96, -184.69, 37.57), 36)
@@ -1620,6 +1630,9 @@ Public Module Places
     Public VPAmmu As New Location("AmmuNation, Vinewood Plaza", New Vector3(237.52, -44.36, 69.28), LocationType.Shopping, New Vector3(251.34, -49.2, 69.94), 45)
     Public Freds As New Location("Fred's Store", New Vector3(337.57, 132.14, 102.6), LocationType.Shopping, New Vector3(333.23, 119.31, 104.31), 310)
     Public BlazingTat As New Location("Blazing Tattoo, Vinewood", New Vector3(316.39, 165.29, 103.28), LocationType.Shopping, New Vector3(320.9, 183.07, 103.59), 221)
+    Public DavisMM As New Location("Davis Mega Mall", New Vector3(68.09, -1707.57, 28.67), LocationType.Shopping, New Vector3(61.38, -1728.26, 29.53), 46)
+    Public VBSidewMark As New Location("Vespucci Beach Sidewalk Market", New Vector3(-1208.53, -1444.11, 3.9), LocationType.Shopping, New Vector3(-1237.16, -1468.65, 4.29), 126)
+    Public ThePit As New Location("The Pit", New Vector3(-1163.91, -1415.34, 4.38), LocationType.Shopping, New Vector3(-1155.54, -1426.46, 4.95), 319)
 
     'ENTERTAINMENT
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
@@ -1635,6 +1648,8 @@ Public Module Places
     Public Galileo As New Location("Galileo Observatory", New Vector3(-411.51, 1174.21, 324.92), LocationType.Entertainment, New Vector3(-415.25, 1166.59, 325.85), 340)
     Public BetsyPav As New Location("Betsy O'Neil Pavilion", New Vector3(-548.26, -648.62, 32.42), LocationType.Entertainment, New Vector3(-555.76, -620.95, 34.68), 183)
     Public SAGOMA As New Location("S.A. Gallery of Modern Art", New Vector3(-424.08, 13.09, 45.75), LocationType.Entertainment, New Vector3(-424.55, 22.97, 46.26), 178)
+    Public Casino As New Location("Be Lucky Casino", New Vector3(919.58, 48.24, 90.39), LocationType.Entertainment, New Vector3(929.17, 42.99, 81.09), 59)
+    Public DPPierNorth As New Location("Del Perro Pier, North Entrance", New Vector3(-1650.6, -951.3, 7.4), LocationType.Entertainment, New Vector3(-1664.32, -967.68, 7.63), 321) With {.PedEnd = New Vector3(-1673.9, -997.3, 7.4)}
 
     'THEATER
     Public LosSantosTheater As New Location("Los Santos Theater", New Vector3(345.33, -867.2, 28.72), LocationType.Theater, New Vector3(353.7, -874.09, 29.29), 8)
