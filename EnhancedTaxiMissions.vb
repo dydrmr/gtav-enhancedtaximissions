@@ -88,8 +88,6 @@ Public Class EnhancedTaxiMissions
     Public updateDist1 As Boolean = False
     Public updateDist2 As Boolean = False
 
-    Public testPed As Ped
-
     Public Enum MiniGameStages
         Standby                 '0
         DrivingToOrigin         '1
@@ -563,6 +561,7 @@ Public Class EnhancedTaxiMissions
 
                     'TO-DO
                     'CREATE MISSION MARKER (LIKE THE ACTUAL TAXI MISSIONS)
+
                 End If
             End If
         End If
@@ -911,12 +910,11 @@ Public Class EnhancedTaxiMissions
 
         FareDistance *= 0.621371
         FareTotal = CInt(Math.Round(FareBase + (FareDistance * FarePerMile)))
-        PRINT("DIS: " & Math.Round(FareDistance, 2) & " mi / $" & FareTotal)
     End Sub
 
     Public Sub calculateTipParameters()
         ArrivalWindowEnd = PickupTime + IdealTripTime - (IdealTripTime * 0.05)
-        PRINT("Ideal Trip Time: " & IdealTripTime / 1000 & " seconds")
+        PRINT("Ideal Trip Time: " & Math.Round(IdealTripTime / 1000) & " seconds")
 
         ArrivalWindowStart = Math.Round(ArrivalWindowEnd - (IdealTripTime * 0.5))
     End Sub
@@ -948,7 +946,6 @@ Public Class EnhancedTaxiMissions
     Private Sub StartMission()
 
         MissionStartTime = Game.GameTime
-        PRINT("Mission start: " & MissionStartTime)
 
         Dim r As Integer = RND.Next(0, 10)
         If r < 1 Then
@@ -1393,7 +1390,7 @@ Public Class EnhancedTaxiMissions
 
         If FareTip > 0 Then
             payPlayer(FareTip)
-            GTA.UI.Notify("Customer tipped you " & Math.Round(FareTipPercent * 100) & "%  You earned an additional $" & FareTip)
+            GTA.UI.Notify("Customer tipped you $" & FareTip & "  (" & Math.Round(FareTipPercent * 100) & "%)")
         End If
 
         'TO-DO
@@ -1550,7 +1547,7 @@ Public Module Places
     Public sDPBeachS As New Location("South Del Perro Beach", New Vector3(-1457.92, -963.99, 6.75), LocationType.Sport, New Vector3(-1463.03, -979.96, 6.91), 181)
     Public sDPBeachC As New Location("Central Del Perro Beach", New Vector3(-1725.3, -733.1, 9.9), LocationType.Sport, New Vector3(-1730.3, -739.3, 9.95), 230)
     Public sVBeachN1 As New Location("North Vespucci Beach", New Vector3(-1400.62, -1028.97, 3.88), LocationType.Sport, New Vector3(-1413.8, -1046.67, 4.62), 135)
-    Public sVBeachN2 As New Location("North Vespucci Beach", New Vector3(-1316.78, -1201.07, 4), LocationType.Sport, New Vector3(-1367.04, -1196.21, 4.45), 212)
+    Public sVBeachN2 As New Location("North Vespucci Beach", New Vector3(-1345.2, -1205.1, 4.2), LocationType.Sport, New Vector3(-1367.04, -1196.21, 4.45), 212)
     Public sDPBeachN As New Location("North Del Perro Beach", New Vector3(-1862.15, -616.73, 10.76), LocationType.Sport, New Vector3(-1868.61, -631.09, 11.09), 130)
     Public MirrorPark As New Location("Mirror Park", New Vector3(1040.04, -531.29, 60.78), LocationType.Sport, New Vector3(1046.1, -535.54, 61.03), 207)
     Public PuertaDelSol As New Location("Puerta Del Sol", New Vector3(-816.06, -133.44, 4.62), LocationType.Sport, New Vector3(-816.41, -1346.46, 5.15), 48)
@@ -1642,7 +1639,7 @@ Public Module Places
     Public MazeBankArena As New Location("Maze Bank Arena", New Vector3(-235.91, -1863.7, 28.03), LocationType.Entertainment, New Vector3(-260.4, -1897.91, 27.76), 8)
     Public DPBeachS As New Location("South Del Perro Beach", New Vector3(-1457.92, -963.99, 6.75), LocationType.Entertainment, New Vector3(-1463.03, -979.96, 6.91), 181)
     Public VBeachN1 As New Location("North Vespucci Beach", New Vector3(-1400.62, -1028.97, 3.88), LocationType.Entertainment, New Vector3(-1413.8, -1046.67, 4.62), 135)
-    Public VBeachN2 As New Location("North Vespucci Beach", New Vector3(-1316.78, -1201.07, 4), LocationType.Entertainment, New Vector3(-1367.04, -1196.21, 4.45), 212)
+    Public VBeachN2 As New Location("North Vespucci Beach", New Vector3(-1345.2, -1205.1, 4.2), LocationType.Entertainment, New Vector3(-1367.04, -1196.21, 4.45), 212)
     Public SplitSides As New Location("Split Sides West", New Vector3(-429.43, 252.64, 82.51), LocationType.Entertainment, New Vector3(-423.71, 259.76, 83.1), 167)
     Public ChuFamPier As New Location("Chumash Family Pier", New Vector3(-3235.25, 968.84, 12.59), LocationType.Entertainment, New Vector3(-3239.96, 971.7, 12.7), 90) With {.PedEnd = New Vector3(-3426.4, 967.81, 8.35)}
     Public Kortz As New Location("Kortz Center", New Vector3(-2296.4, 376.32, 173.75), LocationType.Entertainment, New Vector3(-2288.4, 353.93, 174.6), 3)
@@ -1686,7 +1683,7 @@ Public Module Places
     Public PenrisDT2 As New Location("Penris Tower, Downtown", New Vector3(252.96, -569.05, 42.45), LocationType.Office, New Vector3(217.36, -564.97, 43.87), 297)
     Public CityHallLS As New Location("Los Santos City Hall", New Vector3(257.4, -377.35, 43.84), LocationType.Office, New Vector3(251.39, -389.63, 45.4), 331) With {.PedEnd = New Vector3(235.62, -411.8, 48.11)}
     Public LombankDT As New Location("Lombank Tower, Downtown", New Vector3(0.03, -947.8, 28.53), LocationType.Office, New Vector3(6.34, -934.49, 29.91), 120)
-    Public CityHallRH As New Location("Rockford Hills City Hall", New Vector3(-414.77, -263.78, 35.02), LocationType.Office, New Vector3(-519.76, -255.26, 35.65), 228) With {.PedEnd = New Vector3(-544.91, -205.23, 38.22)}
+    Public CityHallRH As New Location("Rockford Hills City Hall", New Vector3(-515.6, -265, 34.9), LocationType.Office, New Vector3(-519.76, -255.26, 35.65), 228) With {.PedEnd = New Vector3(-544.91, -205.23, 38.22)}
     Public Slaughter3 As New Location("Slaughter, Slaughter & Slaughter", New Vector3(-243.19, -708.09, 33.06), LocationType.Office, New Vector3(-271.49, -703.8, 38.28), 272)
     Public Schlongberg As New Location("Schlongberg Sachs", New Vector3(-232.97, -722.25, 33.06), LocationType.Office, New Vector3(-213.97, -728.8, 33.55), 82)
     Public Arcadius As New Location("Arcadius Business Center", New Vector3(-108.01, -613.95, 35.66), LocationType.Office, New Vector3(-116.6, -605, 36.28), 251)
@@ -1953,7 +1950,7 @@ End Module
 'EVALUATE:
 '   DRIVING STYLE
 '   VEHICLE CONDITION (DAMAGE/DIRT)
-'   SPEED OF PICK-UP AND ARRIVAL
+'   SPEED OF PICK-UP
 'MAKE PEDS AROUND ORIGIN AND DESTINATION NOT AGGRESSIVE
 'CALM DOWN PEDS SO THEY DONT THINK THEYRE BEING CARJACKED
 '   SET RELATIONSHIPS BETWEEN THEM SOMEHOW?
