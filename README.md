@@ -5,7 +5,7 @@ A ScriptHookVDotNet mod for Grand Theft Auto V, which aims to improve the taxi d
 
 #Features
 - Random number of passengers for each trip (between 1 and 3)
-- 300 individual pick-up and drop-off locations
+- 369 individual pick-up and drop-off locations
 - Pick-up locations and destinations change depending on the time of day
 - Taxi missions can be played in the following vehicles: Taxi, Stretch, Schafter, Oracle, Washington, Super Drop.
 - Player is paid based on distance between pick-up and drop-off locations. Base fare is $6, and every mile driven is $25.
@@ -20,7 +20,7 @@ A ScriptHookVDotNet mod for Grand Theft Auto V, which aims to improve the taxi d
 
 #In-Game
 - Press the "L" key to toggle the missions on and off
-- If a passenger gets stuck while trying to get into the vehicle, you can use the horn once to get the passenger to retry entering the vehicle. If it still doesn't work, toggle the missions off and on to reset.
+- If a passenger gets stuck while trying to get into the vehicle, you can use the horn to get the passenger to retry entering the vehicle. If it still doesn't work, toggle the missions off and on to reset.
 - Once you've picked up a passenger, a countdown timer will appear on the UI. As long as it's green, your tip will be 40% of the fare. Once the timer turns yellow, your tip will start to decrease. Once the timer reaches zero, you will not receive a tip. However, you can still complete the mission and receive the base fare.
 
 #Customization
