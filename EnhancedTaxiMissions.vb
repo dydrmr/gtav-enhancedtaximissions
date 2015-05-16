@@ -16,6 +16,7 @@ Public Class EnhancedTaxiMissions
     Public ShowDebugInfo As Boolean = False
     Public ToggleKey As Keys = Keys.L
     Public UnitsInKM As Boolean = True
+    Public doAutosave As Boolean = False
 
     Public isMinigameActive As Boolean = False
     Public MiniGameStage As MiniGameStages = MiniGameStages.Standby
@@ -39,15 +40,15 @@ Public Class EnhancedTaxiMissions
     Public Customer3Ped As Ped
     Public Ped1Blip, Ped2Blip, Ped3Blip As Blip
 
-    Public MissionStartTime As Integer
-    Public OriginArrivalTime As Integer
-    Public PickupTime As Integer
-    Public DestinationArrivalTime As Integer
+    Public MissionStartTime As Integer = 0
+    Public OriginArrivalTime As Integer = 0
+    Public PickupTime As Integer = 0
+    Public DestinationArrivalTime As Integer = 0
 
-    Public IdealTripTime As Integer
-    Public IdealArrivalTime As Integer
-    Public ArrivalWindowStart As Integer
-    Public ArrivalWindowEnd As Integer
+    Public IdealTripTime As Integer = 0
+    Public IdealArrivalTime As Integer = 0
+    Public ArrivalWindowStart As Integer = 0
+    Public ArrivalWindowEnd As Integer = 0
     Public AverageSpeed As Integer = 65
 
     Public isCustomerPedSpawned As Boolean = False
@@ -68,6 +69,7 @@ Public Class EnhancedTaxiMissions
 
     Public IngameMinute As Integer = 0
     Public IngameHour As Integer = 0
+    Public IngameDay As Integer = 0
 
     Public NextMissionStartTime As Integer = 0
 
@@ -147,7 +149,13 @@ Public Class EnhancedTaxiMissions
             Dim v2 As String = Settings.GetValue("SETTINGS", "UNITS")
             Dim v3 As String = Settings.GetValue("SETTINGS", "FAREPERMILE")
             Dim v4 As String = Settings.GetValue("SETTINGS", "AVERAGESPEED")
-            GTA.UI.Notify("Toggle key: " & v1 & " / Units: " & v2 & " / Fare per mile: $" & v3 & " / Avg Speed: " & v4)
+            Dim v5 As String = Settings.GetValue("SETTINGS", "AUTOSAVE")
+            If v5 = "1" Then
+                v5 = "YES"
+            Else
+                v5 = "NO"
+            End If
+            GTA.UI.Notify("TOGGLE: " & v1 & " | UNITS: " & v2 & " | PER MILE: $" & v3 & " | SPEED: " & v4 & " | AUTOSAVE: " & v5)
 
         End If
     End Sub
@@ -156,43 +164,37 @@ Public Class EnhancedTaxiMissions
 
 
     Public Sub New()
-        'GTA.Native.Function.Call(Native.Hash.SET_PED_POPULATION_BUDGET, 700)
-        'GTA.Native.Function.Call(Native.Hash.SET_VEHICLE_POPULATION_BUDGET, 700)
-
-        ListOfPeople.Remove(NonCeleb)
-
-        ScriptStartTime = Game.GameTime
-        'GetSettings()
-
         initPlaceLists()
     End Sub
 
     Public Sub Update(ByVal sender As Object, ByVal e As EventArgs) Handles MyBase.Tick
 
         checkIfItsTimeToLoadSettings()
-
         checkIfMinigameIsActive()
 
-        updateIngameTime()
-        updateDistances()
-        updateRoutes()
-        updateTaxiLight()
 
-        checkIfItsTimeToStartANewMission()
-        checkIfCloseEnoughToSpawnPed()
-        checkIfPlayerHasArrivedAtOrigin()
-        checkIfPlayerHasStoppedAtOrigin()
+        If isMinigameActive Then
+            updateIngameTime()
+            updateDistances()
+            updateRoutes()
+            updateTaxiLight()
 
-        resetNudgeFlags()
-        checkIfPassengerNeedsToBeNudged()
+            checkIfItsTimeToStartANewMission()
+            checkIfCloseEnoughToSpawnPed()
+            checkIfPlayerHasArrivedAtOrigin()
+            checkIfPlayerHasStoppedAtOrigin()
 
-        checkIfPedHasReachedCar()
-        checkIfPedHasEnteredCar()
-        checkIfCloseEnoughToClearDestination()
-        checkIfPlayerHasArrivedAtDestination()
-        checkIfPlayerHasStoppedAtDestination()
+            resetNudgeFlags()
+            checkIfPassengerNeedsToBeNudged()
 
-        refreshUI()
+            checkIfPedHasReachedCar()
+            checkIfPedHasEnteredCar()
+            checkIfCloseEnoughToClearDestination()
+            checkIfPlayerHasArrivedAtDestination()
+            checkIfPlayerHasStoppedAtDestination()
+
+            refreshUI()
+        End If
 
     End Sub
 
@@ -325,12 +327,20 @@ Public Class EnhancedTaxiMissions
             ShowDebugInfo = False
         End If
 
+        value = Settings.GetValue("SETTINGS", "AUTOSAVE")
+        If value = 1 Then
+            doAutosave = True
+        Else
+            doAutosave = False
+        End If
+
     End Sub
 
     Public Sub checkIfItsTimeToLoadSettings()
         If areSettingsLoaded = False Then
-            If Game.GameTime - ScriptStartTime > 1000 Then
+            If Game.GameTime > 1000 Then
                 areSettingsLoaded = True
+                ListOfPeople.Remove(NonCeleb)
                 LoadSettings()
             End If
         End If
@@ -349,7 +359,6 @@ Public Class EnhancedTaxiMissions
             headerText = "Limousine Driver"
         End If
         UI.Items.Add(New UIText(headerText, New Point(3, 1), 0.5, UItext_White, 1, False))
-
 
         '========== COUNTDOWN TIMER / CLOCK
         If MiniGameStage = MiniGameStages.DrivingToDestination Then
@@ -374,6 +383,7 @@ Public Class EnhancedTaxiMissions
         End If
 
 
+
         '========== DISPATCH STATUS
         UI.Items.Add(New UIRectangle(New Point(0, 27), New Size(190, 20), UIcolor_Status))
         UI.Items.Add(New UIText(UI_DispatchStatus, New Point(3, 28), 0.35F, UItext_White, 4, False))
@@ -395,8 +405,6 @@ Public Class EnhancedTaxiMissions
         End If
 
         UI.Draw()
-
-
 
         If ShowDebugInfo = True Then
             UI_Debug.Items.Clear()
@@ -503,6 +511,7 @@ Public Class EnhancedTaxiMissions
     Public Sub updateIngameTime()
         IngameHour = World.CurrentDayTime.Hours
         IngameMinute = World.CurrentDayTime.Minutes
+        IngameDay = GTA.Native.Function.Call(Of Integer)(Native.Hash.GET_CLOCK_DAY_OF_WEEK)
     End Sub
 
     Public Sub updateTaxiLight()
@@ -908,9 +917,11 @@ Public Class EnhancedTaxiMissions
                     CustomerPed.Task.FleeFrom(Game.Player.Character)
                 End If
                 CustomerPed.MarkAsNoLongerNeeded()
-                If Ped1Blip.Exists Then
-                    Ped1Blip.Remove()
-                    Ped1Blip = Nothing
+                If Ped1Blip IsNot Nothing Then
+                    If Ped1Blip.Exists Then
+                        Ped1Blip.Remove()
+                        Ped1Blip = Nothing
+                    End If
                 End If
             End If
         End If
@@ -924,9 +935,11 @@ Public Class EnhancedTaxiMissions
                     CustomerPed.Task.FleeFrom(Game.Player.Character)
                 End If
                 Customer2Ped.MarkAsNoLongerNeeded()
-                If Ped2Blip.Exists Then
-                    Ped2Blip.Remove()
-                    Ped2Blip = Nothing
+                If Ped2Blip IsNot Nothing Then
+                    If Ped2Blip.Exists Then
+                        Ped2Blip.Remove()
+                        Ped2Blip = Nothing
+                    End If
                 End If
             End If
         End If
@@ -940,9 +953,11 @@ Public Class EnhancedTaxiMissions
                     Customer3Ped.Task.FleeFrom(Game.Player.Character)
                 End If
                 Customer3Ped.MarkAsNoLongerNeeded()
-                If Ped3Blip.Exists Then
-                    Ped3Blip.Remove()
-                    Ped3Blip = Nothing
+                If Ped3Blip IsNot Nothing Then
+                    If Ped3Blip.Exists Then
+                        Ped3Blip.Remove()
+                        Ped3Blip = Nothing
+                    End If
                 End If
             End If
         End If
@@ -1328,6 +1343,7 @@ Public Class EnhancedTaxiMissions
             If CustomerPed.Exists Then
                 CustomerPed.Task.GoTo(ppos, False)
                 Ped1Blip = CustomerPed.AddBlip
+                Ped1Blip.Color = BlipColor.Green
                 Ped1Blip.Scale = 0.6
             End If
         End If
@@ -1337,6 +1353,7 @@ Public Class EnhancedTaxiMissions
                 If Customer2Ped.Exists = True Then
                     Customer2Ped.Task.GoTo(ppos, False)
                     Ped2Blip = Customer2Ped.AddBlip
+                    Ped2Blip.Color = BlipColor.Green
                     Ped2Blip.Scale = 0.6
                 End If
             End If
@@ -1347,6 +1364,7 @@ Public Class EnhancedTaxiMissions
                 If Customer3Ped.Exists = True Then
                     Customer3Ped.Task.GoTo(ppos, False)
                     Ped3Blip = Customer3Ped.AddBlip
+                    Ped3Blip.Color = BlipColor.Green
                     Ped3Blip.Scale = 0.6
                 End If
             End If
@@ -1501,18 +1519,63 @@ Public Class EnhancedTaxiMissions
 
         If FareTip > 0 Then
             payPlayer(FareTip)
-            GTA.UI.Notify("Customer tipped you $" & FareTip & "  (" & Math.Round(FareTipPercent * 100) & "%)")
+            GTA.UI.Notify("Tip received: $" & FareTip & "  (" & Math.Round(FareTipPercent * 100) & "%)")
         End If
 
-        'TO-DO
-        'AUTOSAVE
+        If doAutosave = True Then
+            GTA.Native.Function.Call(Native.Hash.DO_AUTO_SAVE)
+        End If
 
-        Dim r As Integer = RND.Next(500, 4000)
-        NextMissionStartTime = Game.GameTime + r
+        MiniGameStage = MiniGameStages.SearchingForFare
+        setStandbySpecs()
+    End Sub
+
+    Public Sub setStandbySpecs()
         UI_DispatchStatus = "Standby, looking for fares..."
         UI_Destination = ""
         UI_Origin = ""
-        MiniGameStage = MiniGameStages.SearchingForFare
+
+
+        Dim maxWaitTime As Integer = 3
+        Select Case IngameDay
+            Case Is > 4
+                Select Case IngameHour
+                    Case 0 To 3
+                        maxWaitTime = 4
+                    Case 4 To 5
+                        maxWaitTime = 30
+                    Case 6 To 10
+                        maxWaitTime = 5
+                    Case 11 To 13
+                        maxWaitTime = 10
+                    Case 14 To 17
+                        maxWaitTime = 4
+                    Case 18 To 23
+                        maxWaitTime = 3
+                End Select
+            Case Else
+                Select Case IngameHour
+                    Case 0
+                        maxWaitTime = 9
+                    Case 1 To 5
+                        maxWaitTime = 30
+                    Case 6 To 10
+                        maxWaitTime = 5
+                    Case 11 To 14
+                        maxWaitTime = 11
+                    Case 15 To 18
+                        maxWaitTime = 5
+                    Case 19 To 22
+                        maxWaitTime = 4
+                    Case 23
+                        maxWaitTime = 8
+                End Select
+        End Select
+
+
+        Dim r As Integer = RND.Next(500, maxWaitTime * 1000)
+        NextMissionStartTime = Game.GameTime + r
+
     End Sub
 
     Private Sub CustomerHasDied()
