@@ -179,6 +179,9 @@ Public Class EnhancedTaxiMissions
             updateRoutes()
             updateTaxiLight()
 
+            checkIfPlayerIsWanted()
+            checkIfPlayerIsDead()
+
             checkIfItsTimeToStartANewMission()
             checkIfCloseEnoughToSpawnPed()
             checkIfPlayerHasArrivedAtOrigin()
@@ -549,6 +552,18 @@ Public Class EnhancedTaxiMissions
         End If
     End Sub
 
+    Public Sub checkIfPlayerIsWanted()
+        If Game.Player.WantedLevel > 0 Then
+            EndMinigame(True)
+        End If
+    End Sub
+
+    Public Sub checkIfPlayerIsDead()
+        If Game.Player.IsDead Then
+            EndMinigame(True)
+        End If
+    End Sub
+
     Public Sub checkIfCloseEnoughToSpawnPed()
         If MiniGameStage = MiniGameStages.DrivingToOrigin Then
             Dim ppos As Vector3 = Game.Player.Character.Position
@@ -678,7 +693,7 @@ Public Class EnhancedTaxiMissions
                         End If
 
                         isCustomerNudged1 = True
-                        NudgeResetTime = Game.GameTime + 1250
+                        NudgeResetTime = Game.GameTime + 750
                     End If
                 End If
             End If
@@ -703,7 +718,7 @@ Public Class EnhancedTaxiMissions
                         End If
                     End If
                     isCustomerNudged2 = True
-                    NudgeResetTime = Game.GameTime + 1250
+                    NudgeResetTime = Game.GameTime + 750
                 End If
             End If
         End If
@@ -770,7 +785,7 @@ Public Class EnhancedTaxiMissions
             Dim dpos As Vector3 = Destination.Coords
             Dim distance As Single = World.GetDistance(ppos, dpos)
 
-            If distance < 60 Then
+            If distance < 90 Then
                 Dim pos As Vector3 = Destination.PedStart
                 If isDestinationCleared = False Then
                     isDestinationCleared = True
@@ -981,7 +996,6 @@ Public Class EnhancedTaxiMissions
             FareDistance = World.GetDistance(StartPoint, EndPoint) / 1000
         End If
 
-        Dim AverageSpeed As Integer = 60
         IdealTripTime = (FareDistance / AverageSpeed) * 60 * 60 * 1000
 
         FareDistance *= 0.621371
@@ -1776,6 +1790,7 @@ Public Module Places
     Public Singletons As New Location("Singletons Bar", New Vector3(233.21, 301.46, 105.17), LocationType.Bar, New Vector3(221.6, 307.5, 105.57), 194)
     Public Clappers As New Location("Clappers", New Vector3(405.86, 131.85, 101.36), LocationType.Bar, New Vector3(412.27, 150.72, 103.21), 161)
     Public MirrParTav As New Location("Mirror Park Tavern", New Vector3(1209.94, -415.29, 67.26), LocationType.Bar, New Vector3(1217.94, -416.8, 67.78), 78)
+    Public RobsMurr As New Location("Rob's Liquor, Murietta Heights", New Vector3(1149.2, -980.4, 45.7), LocationType.Bar, New Vector3(1136.3, -979.4, 46.4), 25)
 
     'SHOPPING
     Public BobMulet As New Location("Bob Mulet Hair & Beauty", New Vector3(-830.47, -190.49, 36.74), LocationType.Shopping, New Vector3(-812.96, -184.69, 37.57), 36)
@@ -1809,6 +1824,10 @@ Public Module Places
     Public VBSidewMark As New Location("Vespucci Beach Sidewalk Market", New Vector3(-1208.53, -1444.11, 3.9), LocationType.Shopping, New Vector3(-1237.16, -1468.65, 4.29), 126)
     Public ThePit As New Location("The Pit", New Vector3(-1163.91, -1415.34, 4.38), LocationType.Shopping, New Vector3(-1155.54, -1426.46, 4.95), 319)
     Public VespMall As New Location("Vespucci Mall", New Vector3(-803.1, -1095.8, 10.4), LocationType.Shopping, New Vector3(-824, -1084.3, 11.1), 256)
+    Public Harmony247 As New Location("24-7 Supermarket, Harmony", New Vector3(542.8, 2680, 42), LocationType.Shopping, New Vector3(547.7, 2669.5, 42.2), 273)
+    Public Gabrielas As New Location("Gabriela's Market, Mirror Park", New Vector3(1175, -280.3, 68.5), LocationType.Shopping, New Vector3(1168.8, -290.9, 69), 329)
+    Public Leopolds As New Location("Leopolds Rockford Hills", New Vector3(-692.9, -372.1, 33.7), LocationType.Shopping, New Vector3(-697.8, -379.8, 34.5), 334)
+    Public EchorockPl As New Location("Echorock Shopping Plaza", New Vector3(94.3, -185.8, 54.3), LocationType.Shopping, New Vector3(106.5, -206, 54.6), 37)
 
     'ENTERTAINMENT
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
@@ -1826,6 +1845,7 @@ Public Module Places
     Public SAGOMA As New Location("S.A. Gallery of Modern Art", New Vector3(-424.08, 13.09, 45.75), LocationType.Entertainment, New Vector3(-424.55, 22.97, 46.26), 178)
     Public Casino As New Location("Be Lucky Casino", New Vector3(919.58, 48.24, 90.39), LocationType.Entertainment, New Vector3(929.17, 42.99, 81.09), 59)
     Public DPPierNorth As New Location("Del Perro Pier, North Entrance", New Vector3(-1650.6, -951.3, 7.4), LocationType.Entertainment, New Vector3(-1664.32, -967.68, 7.63), 321) With {.PedEnd = New Vector3(-1673.9, -997.3, 7.4)}
+    Public Bishops As New Location("Bishop's WTF", New Vector3(59.8, 233.7, 108.8), LocationType.Entertainment, New Vector3(58.5, 224.6, 109.3), 345)
 
     'THEATER
     Public LosSantosTheater As New Location("Los Santos Theater", New Vector3(345.33, -867.2, 28.72), LocationType.Theater, New Vector3(353.7, -874.09, 29.29), 8)
@@ -1848,7 +1868,7 @@ Public Module Places
     Public UD As New Location("Union Depository", New Vector3(-8.13, -741.36, 43.74), LocationType.Office, New Vector3(5.28, -709.38, 45.97), 184)
     Public MB As New Location("Maze Bank Tower", New Vector3(-50.06, -785.19, 43.75), LocationType.Office, New Vector3(-66.16, -800.06, 44.23), 334)
     Public DG As New Location("Daily Globe International", New Vector3(-300.64, -620.04, 33), LocationType.Office, New Vector3(-317.41, -610.01, 33.56), 250)
-    Public Weazel As New Location("Weazel News", New Vector3(-621.96, -930.59, 21.84), LocationType.Office, New Vector3(-600.64, -929.9, 23.86), 95)
+    Public Weazel As New Location("Weazel News Studio", New Vector3(-621.96, -930.59, 21.84), LocationType.Office, New Vector3(-600.64, -929.9, 23.86), 95)
     Public NooseLSIA As New Location("N.O.O.S.E. LSIA", New Vector3(-880.37, -2419.36, 13.36), LocationType.Office, New Vector3(-894.21, -2401.18, 14.02), 191)
     Public BilgecoLSIA As New Location("Bilgeco Shipping Services", New Vector3(-1006.02, -2113.84, 11.37), LocationType.Office, New Vector3(-1024.47, -2127.24, 13.16), 307)
     Public LSCustLSIA As New Location("Los Santos Customs, LSIA", New Vector3(-1132.49, -1989.56, 12.67), LocationType.Office, New Vector3(-1141.05, -1991.34, 13.16), 276)
@@ -1871,6 +1891,8 @@ Public Module Places
     Public Wenger1 As New Location("Wenger Institute", New Vector3(-294.94, -279.51, 30.61), LocationType.Office, New Vector3(-309.69, -279.12, 31.72), 265)
     Public Wenger2 As New Location("Wenger Institute", New Vector3(-383.61, -237.61, 35.17), LocationType.Office, New Vector3(-369.15, -240.52, 36.08), 61)
     Public Vesp707 As New Location("707 Vespucci Blvd", New Vector3(-274.7, -834.1, 31.2), LocationType.Office, New Vector3(-262.4, -837.6, 31.5), 129)
+    Public RebelRad As New Location("Rebel Radio Studio", New Vector3(741.6, 2523.4, 72.8), LocationType.Office, New Vector3(733, 2523.7, 73.2), 255)
+    Public WeazelPlaza As New Location("Weazel Plaza", New Vector3(-860.5, 389, 39), LocationType.Office, New Vector3(-858.9, -407.8, 36.6), 203)
 
     'HOTEL
     Public HotelRichman As New Location("Richman Hotel", New Vector3(-1285.498, 294.565, 64.368), LocationType.HotelLS, New Vector3(-1274.5, 313.97, 65.51), 151)
@@ -1900,6 +1922,7 @@ Public Module Places
     Public CrownJewels As New Location("Crown Jewels Motel", New Vector3(-1300.2, -922.46, 10.55), LocationType.MotelLS, New Vector3(-1308.91, -930.84, 13.36), 313)
     Public PinkCage As New Location("Pink Cage Motel", New Vector3(314.31, -244.63, 53.22), LocationType.MotelLS, New Vector3(313.91, -227.21, 54.02), 229)
     Public AltaMotel As New Location("Alta Motel", New Vector3(66.07, -283.71, 46.68), LocationType.MotelLS, New Vector3(62.95, -255.06, 48.19), 84)
+    Public EasternMotel As New Location("Eastern Motel, Harmony", New Vector3(324.1, 2626.7, 44.2), LocationType.MotelBC, New Vector3(318.6, 2623, 44.5), 312)
 
     'AIRPORT
     Public LSIA1Depart = New Location("LSIA Terminal 1 Departures", New Vector3(-1016.76, -2477.951, 19.596), LocationType.AirportDepart, New Vector3(-1029.35, -2486.58, 20.17), 253)
@@ -2061,6 +2084,8 @@ Public Module Places
     Public VespCan1 As New Location("Vespucci Canals", New Vector3(-1094, -959.4, 1.9), LocationType.Residential, New Vector3(-1061.2, -944.7, 2.2), 200)
     Public VespCan2 As New Location("Vespucci Canals", New Vector3(-1058.2, -1040.2, 1.6), LocationType.Residential, New Vector3(-1066, -1051.2, 6.4), 306)
     Public Goma1 As New Location("Apartment, Goma St, Vespucci", New Vector3(-1134.3, -1478, 4), LocationType.Residential, New Vector3(-1145.7, -1465.9, 7.7), 299)
+    Public Elgin1 As New Location("Elgin House", New Vector3(-7.7, 164.7, 94.9), LocationType.Residential, New Vector3(-36.1, 170.8, 95), 281)
+    Public Elgin2 As New Location("Elgin House", New Vector3(-74.6, 146.5, 80.9), LocationType.Residential, New Vector3(-70.6, 141.6, 81.9), 37)
 
 
     Public Barbareno1 As New Location("1 Barbareno Rd, Chumash", New Vector3(-3172.41, 1289.02, 13.41), LocationType.Residential, New Vector3(-3190.34, 1297.37, 19.07), 247)
@@ -2138,5 +2163,7 @@ End Module
 '   SET RELATIONSHIPS BETWEEN THEM SOMEHOW?
 '   OR GROUP THEM?
 'CHECK IF PEDS ARE DEAD
+'CHECK IF PLAYER IS DEAD
+'CHECK IF PLAYER IS WANTED
 'DISABLE OTHER MISSION MARKERS / TRIGGERS WHEN THIS MINIGAME IS ACTIVE
 
