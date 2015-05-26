@@ -13,10 +13,13 @@ Public Class EnhancedTaxiMissions
     Inherits Script
     Public RND As New Random
 
+    Public TestBlip(500) As Blip
+
     Public ShowDebugInfo As Boolean = False
     Public ToggleKey As Keys = Keys.L
     Public UnitsInKM As Boolean = True
     Public doAutosave As Boolean = False
+    Public CustomLimousine As String = ""
 
     Public isMinigameActive As Boolean = False
     Public MiniGameStage As MiniGameStages = MiniGameStages.Standby
@@ -51,6 +54,7 @@ Public Class EnhancedTaxiMissions
     Public ArrivalWindowEnd As Integer = 0
     Public AverageSpeed As Integer = 65
 
+    Public hasCustomerPedHailedPlayer As Boolean = False
     Public isCustomerPedSpawned As Boolean = False
     Public isDestinationCleared As Boolean = False
     Public isCustomerNudged1 As Boolean = False
@@ -102,6 +106,7 @@ Public Class EnhancedTaxiMissions
         PedGettingOut           '7
         PedWalkingAway          '8
         SearchingForFare        '9
+        RoamingForFare          '10
     End Enum
 
     Public Sub PRINT(msg As String)
@@ -137,7 +142,7 @@ Public Class EnhancedTaxiMissions
     End Sub
 
     Public Sub ReloadSettings(ByVal sender As Object, ByVal k As KeyEventArgs) Handles MyBase.KeyUp
-        'If ShowDebugInfo = False Then Exit Sub
+        If ShowDebugInfo = False Then Exit Sub
 
         If k.KeyCode = Keys.Divide Then
 
@@ -155,16 +160,38 @@ Public Class EnhancedTaxiMissions
             Else
                 v5 = "NO"
             End If
-            GTA.UI.Notify("TOGGLE: " & v1 & " | UNITS: " & v2 & " | PER MILE: $" & v3 & " | SPEED: " & v4 & " | AUTOSAVE: " & v5)
+            Dim v6 As String = Settings.GetValue("SETTINGS", "CUSTOMLIMO")
+            GTA.UI.Notify(v1 & " |  " & v2 & " | " & v3 & " | " & v4 & " | " & v5 & " | " & v6)
 
         End If
     End Sub
 
+    Public Sub SpawnTestBlips()
+        For i As Integer = 1 To 500
+            Dim x As Integer = CInt(i.ToString.Substring(i.ToString.Length - 1))
+            Dim y As Integer = CInt(i / 10)
 
+            TestBlip(i) = World.CreateBlip(New Vector3(x * 25, y * 25, 1000))
+            TestBlip(i).Sprite = i
+            TestBlip(i).ShowNumber(i)
+        Next
+    End Sub
+
+    Public Sub DeleteTestBlips()
+        For i As Integer = 1 To 500
+            If TestBlip(i) IsNot Nothing Then
+                If TestBlip(i).Exists = True Then
+                    TestBlip(i).Remove()
+                End If
+            End If
+        Next
+    End Sub
 
 
     Public Sub New()
         initPlaceLists()
+        areSettingsLoaded = False
+        ListOfPeople.Remove(NonCeleb)
     End Sub
 
     Public Sub Update(ByVal sender As Object, ByVal e As EventArgs) Handles MyBase.Tick
@@ -182,7 +209,10 @@ Public Class EnhancedTaxiMissions
             checkIfPlayerIsWanted()
             checkIfPlayerIsDead()
 
+            checkIfPlayerIsRoaming()
             checkIfItsTimeToStartANewMission()
+            checkIfCloseEnoughToHail()
+            checkIfPlayerHasAbandonedHail()
             checkIfCloseEnoughToSpawnPed()
             checkIfPlayerHasArrivedAtOrigin()
             checkIfPlayerHasStoppedAtOrigin()
@@ -337,16 +367,18 @@ Public Class EnhancedTaxiMissions
             doAutosave = False
         End If
 
+        value = Settings.GetValue("SETTINGS", "CUSTOMLIMO")
+        CustomLimousine = value
+
+        areSettingsLoaded = True
+
     End Sub
 
     Public Sub checkIfItsTimeToLoadSettings()
-        If areSettingsLoaded = False Then
-            If Game.GameTime > 1000 Then
-                areSettingsLoaded = True
-                ListOfPeople.Remove(NonCeleb)
-                LoadSettings()
-            End If
-        End If
+
+        If areSettingsLoaded = True Then Exit Sub
+        LoadSettings()
+
     End Sub
 
     Public Sub refreshUI()
@@ -419,7 +451,9 @@ Public Class EnhancedTaxiMissions
             Dim x As Single = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_GAME_TIMER)
             UI_Debug.Items.Add(New UIText("Game Timer: " & x, New Point(3, 45), 0.25, UItext_White, 0, False))
             UI_Debug.Items.Add(New UIText("Game Time: " & Game.GameTime, New Point(3, 60), 0.25, UItext_White, 0, False))
-
+            If Origin IsNot Nothing Then
+                UI_Debug.Items.Add(New UIText("D. To Origin " & World.GetDistance(Game.Player.Character.Position, Origin.Coords), New Point(3, 75), 0.25, UItext_White, 0, False))
+            End If
 
             UI_Debug.Draw()
         End If
@@ -552,6 +586,37 @@ Public Class EnhancedTaxiMissions
         End If
     End Sub
 
+    Public Sub checkIfPlayerIsRoaming()
+        If MiniGameStage <> MiniGameStages.RoamingForFare Then Exit Sub
+
+        If Game.Player.Character.IsInVehicle = False Then Exit Sub
+
+        Dim p As Ped = World.GetClosestPed(Game.Player.Character.CurrentVehicle.Position + (Game.Player.Character.CurrentVehicle.ForwardVector * 40), 30.0F)
+        If p = Nothing Then Exit Sub
+
+        Customer = NonCeleb
+        CustomerPed = p
+        isCustomerPedSpawned = True
+
+        StreetSidePickup.Coords = p.Position
+        StreetSidePickup.PedStart = p.Position
+        Origin = StreetSidePickup
+        UI_Origin = Origin.Name
+
+        Dim ts As New TaskSequence
+        ts.AddTask.TurnTo(Game.Player.Character, 1000)
+        ts.AddTask.PlayAnimation("taxi_hail", "hail_taxi", 8.0F, 3500, True, 8.0F)
+        ts.AddTask.TurnTo(Game.Player.Character)
+
+        CustomerPed.Task.PerformSequence(ts)
+        CustomerPed.IsPersistent = True
+
+        UI_DispatchStatus = "You've been hailed."
+
+        StartRoamingMission()
+
+    End Sub
+
     Public Sub checkIfPlayerIsWanted()
         If Game.Player.WantedLevel > 0 Then
             EndMinigame(True)
@@ -604,10 +669,39 @@ Public Class EnhancedTaxiMissions
 
                     'TO-DO
                     'CREATE MISSION MARKER (LIKE THE ACTUAL TAXI MISSIONS)
-
                 End If
             End If
         End If
+    End Sub
+
+    Public Sub checkIfCloseEnoughToHail()
+        If MiniGameStage <> MiniGameStages.StoppingAtOrigin Then Exit Sub
+        If hasCustomerPedHailedPlayer = True Then Exit Sub
+        If Destination.Name <> StreetSidePickup.Name Then Exit Sub
+        If World.GetDistance(Game.Player.Character.Position, CustomerPed.Position) > 10 Then Exit Sub
+
+        Dim ts As New TaskSequence
+        ts.AddTask.ClearAll()
+        PRINT("Second Hail")
+        ts.AddTask.PlayAnimation("taxi_hail", "hail_taxi", 8.0F, 2500, True, 8.0F)
+        ts.AddTask.TurnTo(Game.Player.Character, 200)
+        CustomerPed.Task.PerformSequence(ts)
+        hasCustomerPedHailedPlayer = True
+
+    End Sub
+
+    Public Sub checkIfPlayerHasAbandonedHail()
+        If MiniGameStage <> MiniGameStages.DrivingToOrigin Then Exit Sub
+        If Destination.Name <> StreetSidePickup.Name Then Exit Sub
+        If World.GetDistance(Game.Player.Character.Position, CustomerPed.Position) < 80 Then Exit Sub
+
+        PRINT("Hail Abandoned")
+        CustomerPed.Task.ClearAll()
+        CustomerPed.MarkAsNoLongerNeeded()
+        CustomerPed = Nothing
+
+        MiniGameStage = MiniGameStages.SearchingForFare
+        setStandbySpecs()
     End Sub
 
     Public Sub checkIfPedsAreAlive()
@@ -643,10 +737,16 @@ Public Class EnhancedTaxiMissions
             Dim ppos As Vector3 = Game.Player.Character.Position
             Dim opos As Vector3 = Origin.Coords
 
-            Dim distance As Single = GTA.Native.Function.Call(Of Single)(Native.Hash.GET_DISTANCE_BETWEEN_COORDS, ppos.X, ppos.Y, ppos.Z, opos.X, opos.Y, opos.Z, 1)
+            Dim distance As Single = World.GetDistance(ppos, opos)
 
-            If distance < 9 Then
-                PlayerHasArrivedAtOrigin()
+            If Origin.Name = StreetSidePickup.Name Then
+                If distance <= 25 Then
+                    PlayerHasArrivedAtOrigin()
+                End If
+            Else
+                If distance < 9 Then
+                    PlayerHasArrivedAtOrigin()
+                End If
             End If
         End If
     End Sub
@@ -731,7 +831,6 @@ Public Class EnhancedTaxiMissions
                     Dim tgt As Vector3 = Game.Player.Character.Position
                     Dim ppo As Vector3 = CustomerPed.Position
                     Dim distance As Single = World.GetDistance(tgt, ppo)
-
                     If distance < 9 Then
                         PedHasReachedCar()
                     End If
@@ -851,7 +950,7 @@ Public Class EnhancedTaxiMissions
                     If maxSeats >= 3 Then
                         Dim veh As String = Game.Player.Character.CurrentVehicle.DisplayName
 
-                        If veh = "TAXI" Or veh = "STRETCH" Or veh = "SCHAFTER" Or veh = "SUPERD" Or veh = "ORACLE" Or veh = "WASHINGT" Then
+                        If veh = "TAXI" Or veh = "STRETCH" Or veh = "SCHAFTER" Or veh = "SUPERD" Or veh = "ORACLE" Or veh = "WASHINGT" Or veh = CustomLimousine Then
                             StartMinigame()
                             isMinigameActive = True
                         Else
@@ -878,6 +977,7 @@ Public Class EnhancedTaxiMissions
         updateDist2 = False
 
         isSpecialMission = False
+        hasCustomerPedHailedPlayer = False
         isCustomerPedSpawned = False
         isDestinationCleared = False
         isCustomerNudged1 = False
@@ -904,7 +1004,21 @@ Public Class EnhancedTaxiMissions
 
         MiniGameStage = MiniGameStages.Standby
 
-        StartMission()
+
+        If Game.Player.Character.IsInVehicle = True Then
+            If Game.Player.Character.CurrentVehicle.DisplayName = "TAXI" Then
+                Dim r As Integer = RND.Next(0, 2)
+
+                If r = 0 Then
+                    StartMission()
+                Else
+                    SetUpRoamingMission()
+                End If
+            Else
+                StartMission()
+            End If
+        End If
+
     End Sub
 
     Public Sub EndMinigame(Optional panic As Boolean = False)
@@ -979,6 +1093,8 @@ Public Class EnhancedTaxiMissions
 
         isMinigameActive = False
 
+        'DeleteTestBlips()
+
     End Sub
 
     Public Sub payPlayer(amount As Integer)
@@ -1032,6 +1148,10 @@ Public Class EnhancedTaxiMissions
 
 
 
+    Private Sub SetUpRoamingMission()
+        UI_DispatchStatus = "Drive around to find a fare."
+        MiniGameStage = MiniGameStages.RoamingForFare
+    End Sub
 
     Private Sub StartMission()
 
@@ -1066,8 +1186,36 @@ Public Class EnhancedTaxiMissions
         End If
 
         OriginBlip = World.CreateBlip(Origin.Coords)
+        OriginBlip.Sprite = 280
         OriginBlip.Color = BlipColor.Blue
         OriginBlip.ShowRoute = True
+
+        GTA.Native.Function.Call(Native.Hash.FLASH_MINIMAP_DISPLAY)
+
+
+        'SpawnTestBlips()
+
+        updateDist1 = True
+        MiniGameStage = MiniGameStages.DrivingToOrigin
+    End Sub
+
+    Private Sub StartRoamingMission()
+
+        MissionStartTime = Game.GameTime
+
+        GenerateGenericMissionLocations()
+
+        SelectValidDestination(PotentialDestinations)
+
+        OriginBlip = World.CreateBlip(CustomerPed.Position)
+        OriginBlip.Sprite = 280
+        OriginBlip.Color = BlipColor.Blue
+        OriginBlip.ShowRoute = True
+
+        GTA.Native.Function.Call(Native.Hash.FLASH_MINIMAP_DISPLAY)
+
+
+        'SpawnTestBlips()
 
         updateDist1 = True
         MiniGameStage = MiniGameStages.DrivingToOrigin
@@ -1086,6 +1234,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lMotelLS)
                     .AddRange(lStripClub)
                     .AddRange(lTheater)
+                    .AddRange(lFactory)
                 End With
                 With PotentialDestinations
                     .AddRange(lHotelLS)
@@ -1106,6 +1255,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lShopping)
                     .AddRange(lReligious)
                     .AddRange(lStripClub)
+                    .AddRange(lFactory)
                 End With
                 With PotentialDestinations
                     .AddRange(lAirportD)
@@ -1118,6 +1268,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lReligious)
                     .AddRange(lOffice)
                     .AddRange(lSchool)
+                    .AddRange(lFactory)
                 End With
 
             Case 11 To 15
@@ -1165,6 +1316,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lOffice)
                     .AddRange(lTheater)
                     .AddRange(lSchool)
+                    .AddRange(lFactory)
                 End With
                 With PotentialDestinations
                     .AddRange(lAirportD)
@@ -1178,6 +1330,7 @@ Public Class EnhancedTaxiMissions
                     .AddRange(lBar)
                     .AddRange(lTheater)
                     .AddRange(lSchool)
+                    .AddRange(lFactory)
                 End With
 
             Case 20 To 23
@@ -1359,6 +1512,7 @@ Public Class EnhancedTaxiMissions
                 Ped1Blip = CustomerPed.AddBlip
                 Ped1Blip.Color = BlipColor.Green
                 Ped1Blip.Scale = 0.6
+                Ped1Blip.ShowNumber(1)
             End If
         End If
 
@@ -1369,6 +1523,7 @@ Public Class EnhancedTaxiMissions
                     Ped2Blip = Customer2Ped.AddBlip
                     Ped2Blip.Color = BlipColor.Green
                     Ped2Blip.Scale = 0.6
+                    Ped2Blip.ShowNumber(2)
                 End If
             End If
         End If
@@ -1380,11 +1535,16 @@ Public Class EnhancedTaxiMissions
                     Ped3Blip = Customer3Ped.AddBlip
                     Ped3Blip.Color = BlipColor.Green
                     Ped3Blip.Scale = 0.6
+                    Ped3Blip.ShowNumber(3)
                 End If
             End If
         End If
 
-        OriginBlip.Remove()
+        If OriginBlip IsNot Nothing Then
+            If OriginBlip.Exists Then
+                OriginBlip.Remove()
+            End If
+        End If
 
         'TO-DO
         'REMOVE ORIGIN MISSION MARKER
@@ -1433,6 +1593,7 @@ Public Class EnhancedTaxiMissions
         DestinationBlip = World.CreateBlip(Destination.Coords)
         DestinationBlip.Color = BlipColor.Blue
         DestinationBlip.ShowRoute = True
+        GTA.Native.Function.Call(Native.Hash.SET_GPS_ACTIVE, True)
 
         If CustomerPed IsNot Nothing Then
             If CustomerPed.Exists Then
@@ -1483,9 +1644,6 @@ Public Class EnhancedTaxiMissions
 
         Dim LeaveSequence As New TaskSequence
 
-        LeaveSequence.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
-        LeaveSequence.AddTask.Wait(300)
-
         Dim isDestinationSet As Boolean
         If Destination.PedEnd.X = 0 And Destination.PedEnd.Y = 0 And Destination.PedEnd.Z = 0 Then
             isDestinationSet = False
@@ -1494,26 +1652,33 @@ Public Class EnhancedTaxiMissions
         End If
 
 
+        Dim TargetPoint As Vector3
         If isDestinationSet = False Then
-            LeaveSequence.AddTask.GoTo(Destination.PedStart, False)
+            TargetPoint = Destination.PedStart
         Else
-            LeaveSequence.AddTask.GoTo(Destination.PedEnd, False)
+            TargetPoint = Destination.PedEnd
         End If
-        LeaveSequence.AddTask.Wait(25000)
-
 
         If CustomerPed IsNot Nothing Then
             If CustomerPed.Exists = True Then
+                LeaveSequence.AddTask.Wait(RND.Next(200, 1200))
+                LeaveSequence.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+                LeaveSequence.AddTask.GoTo(TargetPoint, False)
                 CustomerPed.Task.PerformSequence(LeaveSequence)
                 CustomerPed.MarkAsNoLongerNeeded()
+                CustomerPed = Nothing
             End If
         End If
 
         If isThereASecondCustomer = True Then
             If Customer2Ped IsNot Nothing Then
                 If Customer2Ped.Exists Then
+                    LeaveSequence.AddTask.Wait(RND.Next(200, 1200))
+                    LeaveSequence.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+                    LeaveSequence.AddTask.GoTo(TargetPoint, False)
                     Customer2Ped.Task.PerformSequence(LeaveSequence)
                     Customer2Ped.MarkAsNoLongerNeeded()
+                    Customer2Ped = Nothing
                 End If
             End If
         End If
@@ -1522,8 +1687,12 @@ Public Class EnhancedTaxiMissions
         If isThereAThirdCustomer = True Then
             If Customer3Ped IsNot Nothing Then
                 If Customer3Ped.Exists Then
+                    LeaveSequence.AddTask.Wait(RND.Next(200, 1200))
+                    LeaveSequence.AddTask.LeaveVehicle(Game.Player.Character.CurrentVehicle, True)
+                    LeaveSequence.AddTask.GoTo(TargetPoint, False)
                     Customer3Ped.Task.PerformSequence(LeaveSequence)
                     Customer3Ped.MarkAsNoLongerNeeded()
+                    Customer3Ped = Nothing
                 End If
             End If
         End If
@@ -1669,6 +1838,7 @@ Public Enum LocationType
     School
     Office
     Factory
+    StreetSidePickup
 End Enum
 
 Public Class Location
@@ -1709,10 +1879,14 @@ Public Module Places
     Public lReligious As New List(Of Location)
     Public lSport As New List(Of Location)
     Public lOffice As New List(Of Location)
+    Public lFactory As New List(Of Location)
     Public lStripClub As New List(Of Location)
     Public lEpsilon As New List(Of Location)
     Public lTheater As New List(Of Location)
     Public lSchool As New List(Of Location)
+
+    'NULLS
+    Public StreetSidePickup As New Location("Streetside pickup", Vector3.Zero, LocationType.StreetSidePickup, Vector3.Zero, 0)
 
     'SCHOOL
     Public ULSA1 As New Location("ULSA Campus", New Vector3(-1572.412, 175.073, 57.622), LocationType.School, New Vector3(-1577.04, 183.68, 58.88), 219)
@@ -1741,6 +1915,9 @@ Public Module Places
     Public PuertaDelSol As New Location("Puerta Del Sol", New Vector3(-816.06, -133.44, 4.62), LocationType.Sport, New Vector3(-816.41, -1346.46, 5.15), 48)
     Public KoiSpa As New Location("Koi Retreat & Spa", New Vector3(-1047.08, -1467.7, 4.6), LocationType.Sport, New Vector3(-1040.63, -1474.9, 5.6), 53)
     Public ParkSheld As New Location("N Sheldon Ave Park", New Vector3(-807.1, 826.7, 202.6), LocationType.Sport, New Vector3(-805.7, 840.9, 203.5), 359)
+    Public GWCGolf As New Location("GWC and Golfing Society", New Vector3(-1125.4, 380.2, 70), LocationType.Sport, New Vector3(-1139.8, 376.2, 71.3), 313)
+    Public InnocencePark As New Location("Innocence Blvd Park", New Vector3(385.2, -1552.2, 28.8), LocationType.Sport, New Vector3(387.1, -1541, 29.3), 146) With {.PedEnd = New Vector3(397.3, -1523.3, 29.3)}
+    Public BJSmith As New Location("B.J. Smith Rec Center & Park", New Vector3(-212.8, -1495.5, 30.9), LocationType.Sport, New Vector3(-223.7, -1499.6, 32), 301) With {.PedEnd = New Vector3(-239.1, -1515.4, 33.4)}
 
     'FAST FOOD
     Public DPPUnA As New Location("Up-n-Atom, Del Perro Plaza", New Vector3(-1529.8, -444.44, 34.73), LocationType.FastFood, New Vector3(-1552.48, -440, 40.52), 229)
@@ -1791,6 +1968,9 @@ Public Module Places
     Public Clappers As New Location("Clappers", New Vector3(405.86, 131.85, 101.36), LocationType.Bar, New Vector3(412.27, 150.72, 103.21), 161)
     Public MirrParTav As New Location("Mirror Park Tavern", New Vector3(1209.94, -415.29, 67.26), LocationType.Bar, New Vector3(1217.94, -416.8, 67.78), 78)
     Public RobsMurr As New Location("Rob's Liquor, Murietta Heights", New Vector3(1149.2, -980.4, 45.7), LocationType.Bar, New Vector3(1136.3, -979.4, 46.4), 25)
+    Public HiMen As New Location("Hi-Men Bar", New Vector3(500, -1544.3, 28.8), LocationType.Bar, New Vector3(494.2, -1542.4, 29.3), 257)
+    Public BrewersDrop As New Location("Brewer's Drop Liquor Store", New Vector3(89.6, -1315.4, 28.8), LocationType.Bar, New Vector3(98.9, -1309.5, 29.3), 122)
+    Public BrougeLiqu As New Location("Brouge Liquor Store", New Vector3(222, -1739.9, 28.4), LocationType.Bar, New Vector3(225.6, -1749.9, 29.3), 33)
 
     'SHOPPING
     Public BobMulet As New Location("Bob Mulet Hair & Beauty", New Vector3(-830.47, -190.49, 36.74), LocationType.Shopping, New Vector3(-812.96, -184.69, 37.57), 36)
@@ -1828,6 +2008,13 @@ Public Module Places
     Public Gabrielas As New Location("Gabriela's Market, Mirror Park", New Vector3(1175, -280.3, 68.5), LocationType.Shopping, New Vector3(1168.8, -290.9, 69), 329)
     Public Leopolds As New Location("Leopolds Rockford Hills", New Vector3(-692.9, -372.1, 33.7), LocationType.Shopping, New Vector3(-697.8, -379.8, 34.5), 334)
     Public EchorockPl As New Location("Echorock Shopping Plaza", New Vector3(94.3, -185.8, 54.3), LocationType.Shopping, New Vector3(106.5, -206, 54.6), 37)
+    Public LuxuryAutos As New Location("Luxury Autos, Rockford Hills", New Vector3(-809.7, -227.5, 36.7), LocationType.Shopping, New Vector3(-803.4, -224.2, 37.2), 113)
+    Public Covgari As New Location("Covgari", New Vector3(-778.6, -287.2, 36.5), LocationType.Shopping, New Vector3(-770.7, -287.2, 37.1), 90)
+    Public Straw247 As New Location("24-7, Strawberry", New Vector3(25.2, -1357.1, 28.8), LocationType.Shopping, New Vector3(26.6, -1345.5, 29.5), 96)
+    Public DiscJew As New Location("Discount Jewels", New Vector3(136.4, -1761.5, 28.5), LocationType.Shopping, New Vector3(130.9, -1771.8, 29.7), 320)
+    Public AtomicSvc As New Location("Atomic Service Center", New Vector3(494.8, -1877.9, 25.8), LocationType.Shopping, New Vector3(487, -1878.3, 26.2), 272)
+    Public AmmuCypress As New Location("AmmuNation, Cypress Flats", New Vector3(813.7, -2133, 28.9), LocationType.Shopping, New Vector3(810.6, -2156.6, 29.6), 171)
+    Public ChambMall As New Location("chamberlain Mall", New Vector3(96.1, -1379.5, 28.8), LocationType.Shopping, New Vector3(76, -1393.2, 29.4), 100)
 
     'ENTERTAINMENT
     Public DelPerroPier As New Location("Del Perro Pier", New Vector3(-1624.56, -1008.23, 12.4), LocationType.Entertainment, New Vector3(-1638, -1012.97, 13.12), 346) With {.PedEnd = New Vector3(-1841.98, -1213.19, 13.02)}
@@ -1846,6 +2033,8 @@ Public Module Places
     Public Casino As New Location("Be Lucky Casino", New Vector3(919.58, 48.24, 90.39), LocationType.Entertainment, New Vector3(929.17, 42.99, 81.09), 59)
     Public DPPierNorth As New Location("Del Perro Pier, North Entrance", New Vector3(-1650.6, -951.3, 7.4), LocationType.Entertainment, New Vector3(-1664.32, -967.68, 7.63), 321) With {.PedEnd = New Vector3(-1673.9, -997.3, 7.4)}
     Public Bishops As New Location("Bishop's WTF", New Vector3(59.8, 233.7, 108.8), LocationType.Entertainment, New Vector3(58.5, 224.6, 109.3), 345)
+    Public RanchoTowers As New Location("Rancho Towers", New Vector3(386.9, -2148.7, 15.9), LocationType.Entertainment, New Vector3(378.9, -2139.5, 16.3), 200) With {.PedEnd = New Vector3(358.8, -2118.8, 16)}
+    Public DavisLib As New Location("Davis Public Library", New Vector3(238.5, -1573, 28.8), LocationType.Entertainment, New Vector3(252.7, -1594.1, 31.5), 328)
 
     'THEATER
     Public LosSantosTheater As New Location("Los Santos Theater", New Vector3(345.33, -867.2, 28.72), LocationType.Theater, New Vector3(353.7, -874.09, 29.29), 8)
@@ -1855,12 +2044,13 @@ Public Module Places
     Public Whirly As New Location("Whirlygig Theater", New Vector3(306.1, 145.38, 103.31), LocationType.Theater, New Vector3(303.21, 136.62, 103.81), 337)
     Public Oriental As New Location("Oriental Theater", New Vector3(292.32, 176, 103.7), LocationType.Theater, New Vector3(292.3, 192.13, 104.37), 195)
     Public Doppler As New Location("Doppler Theater", New Vector3(330.98, 161.02, 102.94), LocationType.Theater, New Vector3(337.21, 177.19, 103.12), 344)
+    Public Beacon As New Location("Beacon Theatre", New Vector3(461.9, -1448.7, 28.8), LocationType.Theater, New Vector3(461.3, -1456.8, 29.3), 12)
 
     'S CLUB
     Public StripHornbills As New Location("Hornbill's", New Vector3(-380.469, 230.008, 83.622), LocationType.StripClub, New Vector3(-386.78, 220.33, 83.79), 6)
     Public StripVanUni As New Location("Vanilla Unicorn", New Vector3(133.93, -1307.91, 28.28), LocationType.StripClub, New Vector3(127.26, -1289.09, 29.28), 206)
 
-    'WORK
+    'OFFICE
     Public LombankLittleSeoul As New Location("Lombank, Little Seoul", New Vector3(-688.22, -648.09, 30.37), LocationType.Office, New Vector3(-687.1, -617.62, 31.56), 157)
     Public AuguryIns As New Location("Augury Insurance", New Vector3(-289.45, -412.25, 29.25), LocationType.Office, New Vector3(-296.18, -424.89, 30.24), 325)
     Public IAA As New Location("International Affairs Agency", New Vector3(106.08, -611.18, 43.63), LocationType.Office, New Vector3(117.54, -622.52, 44.24), 53)
@@ -1893,6 +2083,16 @@ Public Module Places
     Public Vesp707 As New Location("707 Vespucci Blvd", New Vector3(-274.7, -834.1, 31.2), LocationType.Office, New Vector3(-262.4, -837.6, 31.5), 129)
     Public RebelRad As New Location("Rebel Radio Studio", New Vector3(741.6, 2523.4, 72.8), LocationType.Office, New Vector3(733, 2523.7, 73.2), 255)
     Public WeazelPlaza As New Location("Weazel Plaza", New Vector3(-860.5, 389, 39), LocationType.Office, New Vector3(-858.9, -407.8, 36.6), 203)
+    Public MorsMutual As New Location("Mors Mutual Insurance", New Vector3(-816.4, -256.1, 36.4), LocationType.Office, New Vector3(-825.5, -260.8, 38), 296)
+    Public LSCoCoroner As New Location("LS County Coroner", New Vector3(231.7, -1391.6, 30.1), LocationType.Office, New Vector3(239.5, -1381, 33.7), 146)
+    Public HospCentralLSMed As New Location("Central LS Medical Center", New Vector3(309.4, -1378.1, 31.4), LocationType.Office, New Vector3(323.2, -1386.3, 31.9), 67) With {.PedEnd = New Vector3(343.2, -1398.6, 32.5)}
+    Public DavisCourts As New Location("Davis Courts Building", New Vector3(254.9, -1641.5, 28.7), LocationType.Office, New Vector3(261.2, -1632.3, 30), 153)
+    Public LSMeteor As New Location("Los Santos Meteor", New Vector3(-113.6, -1312.9, 28.8), LocationType.Office, New Vector3(-121.1, -1314, 29.3), 272)
+
+    'FACTORY
+    Public PisswasserFac As New Location("Pisswasser Factory", New Vector3(949.7, -1808.2, 30.7), LocationType.Factory, New Vector3(930.4, -1807.9, 31.3), 269)
+    Public Fridgit As New Location("Fridgit Cold Storage", New Vector3(852.6, -1641.7, 29.7), LocationType.Factory, New Vector3(867.8, -1639.7, 30.2), 103)
+    Public BagCo As New Location("Los Santos Bag Co", New Vector3(785.5, -1351.1, 25.9), LocationType.Factory, New Vector3(764.8, -1355.1, 26.4), 103)
 
     'HOTEL
     Public HotelRichman As New Location("Richman Hotel", New Vector3(-1285.498, 294.565, 64.368), LocationType.HotelLS, New Vector3(-1274.5, 313.97, 65.51), 151)
@@ -1923,6 +2123,7 @@ Public Module Places
     Public PinkCage As New Location("Pink Cage Motel", New Vector3(314.31, -244.63, 53.22), LocationType.MotelLS, New Vector3(313.91, -227.21, 54.02), 229)
     Public AltaMotel As New Location("Alta Motel", New Vector3(66.07, -283.71, 46.68), LocationType.MotelLS, New Vector3(62.95, -255.06, 48.19), 84)
     Public EasternMotel As New Location("Eastern Motel, Harmony", New Vector3(324.1, 2626.7, 44.2), LocationType.MotelBC, New Vector3(318.6, 2623, 44.5), 312)
+    Public BilingsgateMotel As New Location("Bilingsgate Motel", New Vector3(571.8, -1732.7, 28.8), LocationType.MotelLS, New Vector3(571.4, -1741.2, 29.3), 335) With {.PedEnd = New Vector3(553, -1765.7, 33.4)}
 
     'AIRPORT
     Public LSIA1Depart = New Location("LSIA Terminal 1 Departures", New Vector3(-1016.76, -2477.951, 19.596), LocationType.AirportDepart, New Vector3(-1029.35, -2486.58, 20.17), 253)
@@ -2064,6 +2265,17 @@ Public Module Places
     Public HCA2859 As New Location("2859 Hillcrest Ave", New Vector3(-682.87, 669.84, 150.7), LocationType.Residential, New Vector3(-700.48, 648.63, 155.18), 333)
 
 
+    Public Forum1804 As New Location("1804 Forum Dr", New Vector3(-151.3, -1554.9, 34.4), LocationType.Residential, New Vector3(-170.7, -1538.3, 35.1), 325)
+    Public Forum1802 As New Location("1802 Forum Dr", New Vector3(-187.7, -1605.6, 33.6), LocationType.Residential, New Vector3(-211.2, -1598.4, 34.9), 194)
+    Public Forum1800 As New Location("1800 Forum Dr", New Vector3(-188.6, -1671.9, 33.1), LocationType.Residential, New Vector3(-214.2, -1667.6, 34.5), 189)
+    Public Forum1801 As New Location("1801 Forum Dr", New Vector3(-159.7, -1704.1, 30.6), LocationType.Residential, New Vector3(-150.8, -1689.3, 32.9), 134)
+    Public Forum1803 As New Location("1803 Forum Dr", New Vector3(-178.7, -1634, 32.8), LocationType.Residential, New Vector3(-160.2, -1637.1, 34), 55)
+    Public Forum1805 As New Location("1805 Forum Dr", New Vector3(-158, -1576.5, 34.4), LocationType.Residential, New Vector3(-138.2, -1590.1, 34.2), 120)
+    Public Forum1807 As New Location("1807 Forum Dr", New Vector3(-142.3, -1558.8, 34), LocationType.Residential, New Vector3(-152.6, -1576.1, 34.2), 354)
+    Public Brouge1 As New Location("Brouge Ave", New Vector3(260.7, -1683.6, 28.8), LocationType.Residential, New Vector3(252.9, -1671.8, 29.7), 219)
+    Public Brouge2 As New Location("Brouge Ave", New Vector3(251, -1695.5, 28.7), LocationType.Residential, New Vector3(242, -1688.1, 29.3), 241)
+    Public Brouge3 As New Location("Brouge Ave", New Vector3(233.2, -1716, 28.6), LocationType.Residential, New Vector3(223.1, -1703.2, 29.7), 227)
+    Public Brouge4 As New Location("Brouge Ave", New Vector3(226, -1725.1, 28.5), LocationType.Residential, New Vector3(217.2, -1717.3, 29.3), 272)
 
     Public Alta601 As New Location("601 Alta St", New Vector3(148.56, 63.6, 78.25), LocationType.Residential, New Vector3(124.5, 64.8, 79.74), 249)
     Public Alta602 As New Location("602 Alta St", New Vector3(138.26, 38.42, 71.89), LocationType.Residential, New Vector3(112.25, 56.62, 73.51), 257)
@@ -2086,6 +2298,8 @@ Public Module Places
     Public Goma1 As New Location("Apartment, Goma St, Vespucci", New Vector3(-1134.3, -1478, 4), LocationType.Residential, New Vector3(-1145.7, -1465.9, 7.7), 299)
     Public Elgin1 As New Location("Elgin House", New Vector3(-7.7, 164.7, 94.9), LocationType.Residential, New Vector3(-36.1, 170.8, 95), 281)
     Public Elgin2 As New Location("Elgin House", New Vector3(-74.6, 146.5, 80.9), LocationType.Residential, New Vector3(-70.6, 141.6, 81.9), 37)
+    Public RichMajApt As New Location("Richards Majestic Apartments", New Vector3(-966.5, -400.8, 37.2), LocationType.Residential, New Vector3(-937.5, -380.4, 39), 124)
+    Public RLBApt As New Location("Apartment, R. Lowenstein Blvd", New Vector3(482.1, -1569.6, 28.7), LocationType.Residential, New Vector3(470.8, -1568.9, 29.3), 251) With {.PedEnd = New Vector3(446.5, -1571.4, 32.8)}
 
 
     Public Barbareno1 As New Location("1 Barbareno Rd, Chumash", New Vector3(-3172.41, 1289.02, 13.41), LocationType.Residential, New Vector3(-3190.34, 1297.37, 19.07), 247)
@@ -2140,6 +2354,8 @@ Public Module Places
                     lTheater.Add(l)
                 Case LocationType.School
                     lSchool.Add(l)
+                Case LocationType.Factory
+                    lFactory.Add(l)
             End Select
         Next
     End Sub
