@@ -5,17 +5,17 @@ A ScriptHookVDotNet mod for Grand Theft Auto V, which aims to improve the taxi d
 
 #Features
 - Random number of passengers for each trip (between 1 and 3)
-- 369 individual pick-up and drop-off locations
+- 420 individual pick-up and drop-off locations
 - Pick-up locations and destinations change depending on the time of day
 - Taxi missions can be played in the following vehicles: Taxi, Stretch, Schafter, Oracle, Washington, Super Drop.
 - Player is paid based on distance between pick-up and drop-off locations. Base fare is $6, and every mile driven is $25.
 - Customers tip player based on the speed of delivery.
+- Random peds on the street may hail player if driving a taxi cab.
 
 #Wishlist
 - More locations
 - More tip payment factors based on performance (vehicle damage state, speed of pick-up)
 - Celebrity passengers (who tip better)
-- Getting hailed by random pedestrians (if driving a taxi)
 - Random special missions (e.g. drive Epsilon members from HQ to secret locations / drive Celeb to movie premiere / passenger needs to catch a plane at the airport)
 
 #In-Game
